@@ -104,16 +104,16 @@ wire inst_andb_ext              = ir_q == 8'hf4;
 wire inst_andcc_imm             = ir_q == 8'h1c;
 
 // Arithmetic Shift Left (ASL)
-wire inst_asla                  = ir_q == 8'h48;
-wire inst_aslb                  = ir_q == 8'h58;
+wire inst_asla                  = ir_q == 8'h48; // Done 
+wire inst_aslb                  = ir_q == 8'h58; // Done 
 
 wire inst_asl_dir               = ir_q == 8'h08;
 wire inst_asl_idx               = ir_q == 8'h68;
 wire inst_asl_ext               = ir_q == 8'h78;
 
 // Arithmetic Shift Right (ASR)
-wire inst_asra                  = ir_q == 8'h47;
-wire inst_asrb                  = ir_q == 8'h57;
+wire inst_asra                  = ir_q == 8'h47; // Done 
+wire inst_asrb                  = ir_q == 8'h57; // Done 
 
 wire inst_asr_dir               = ir_q == 8'h07;
 wire inst_asr_idx               = ir_q == 8'h67;
@@ -547,8 +547,11 @@ always @(posedge clk or negedge reset_b ) begin
 
 // On-hots for ALU Operations
 // Start with opcode detection. 
-wire alu_op_inc    = ir_q[3:0] == 4'hc;
+wire alu_op_asl    = ir_q[3:0] == 4'h8;
+wire alu_op_asr    = ir_q[3:0] == 4'h7;
 wire alu_op_clr    = ir_q[3:0] == 4'hf;
+wire alu_op_inc    = ir_q[3:0] == 4'hc;
+
 
 // Input Register 
 wire alu_src_a     = ir_q[7:4] == 4'h4; // CLR, INC
@@ -561,7 +564,9 @@ wire alu_dest_b    = ir_q[7:4] == 4'h5;
 wire [7:0] cc_q_next;
 
 // a signal that triggers condition code updates.
-wire alu_op = alu_op_clr | alu_op_inc;
+// The overflow bit is a little odd.  Not all instructions support it.
+wire alu_op     = alu_op_clr | alu_op_inc | alu_op_asl | alu_op_asr;
+wire alu_op_ov  = alu_op_clr | alu_op_inc;
 
 // Mux the inputs into ALU Port 0  
 wire [7:0] alu_in0 = {
@@ -580,6 +585,8 @@ wire [7:0] alu_in1 = {
 wire [8:0] alu_out = {
   alu_op_clr   ?   alu_in0 ^ alu_in1   :
   alu_op_inc   ? ( alu_in0 + alu_in1 ) :
+  alu_op_asl   ?  { alu_in0, 1'b0 }    :
+  alu_op_asr   ?  { alu_in0[0], alu_in0[7], alu_in0[7:1] } : // LSB -> Carry 
   9'h00  
   };
 
@@ -595,10 +602,10 @@ assign cc_q_next[CC_I] = cc_q[CC_I];
 // ALU-Controlled bits.
 // Overflow appears to be when bit 8 differs from bit 7
 assign cc_q_next[CC_H] =                                     cc_q[CC_H] ;
-assign cc_q_next[CC_N] = alu_op ?    alu_out[8]            : cc_q[CC_N] ;
-assign cc_q_next[CC_Z] = alu_op ? ~( |alu_out)             : cc_q[CC_Z] ;
-assign cc_q_next[CC_V] = alu_op ?  alu_out[8] ^ alu_out[7] : cc_q[CC_V] ;
-assign cc_q_next[CC_C] = alu_op ?   alu_out[8]             : cc_q[CC_C] ;
+assign cc_q_next[CC_N] = alu_op    ?    alu_out[7]            : cc_q[CC_N] ;
+assign cc_q_next[CC_Z] = alu_op    ? ~( |alu_out)             : cc_q[CC_Z] ;
+assign cc_q_next[CC_V] = alu_op_ov ?  alu_out[8] ^ alu_out[7] : cc_q[CC_V] ;
+assign cc_q_next[CC_C] = alu_op    ?  alu_out[8]              : cc_q[CC_C] ;
 
 // Update the registers.   Tie this into the reset signal.  
 always @(posedge clk or negedge reset_b ) begin 
@@ -654,7 +661,7 @@ always @(posedge clk) begin
 
   // Only a single one-hot alu operation should be active at once.
   assert( (
-    alu_op_inc + alu_op_clr
+    alu_op_inc + alu_op_clr + alu_op_asl + alu_op_asr 
     ) <= 1 );
 
   // Only one destination register at a time 
@@ -675,6 +682,10 @@ always @(posedge clk) begin
     inst_nega + inst_negb + 
     inst_neg_dir + inst_neg_idx + inst_neg_ext +
     
+    inst_asla + inst_aslb +
+    inst_asl_dir + inst_asl_idx + inst_asl_ext + 
+    inst_asra + inst_asrb + 
+    inst_asr_dir + inst_asr_idx + inst_asr_ext +
     0  
         
     ) <= 1 );
