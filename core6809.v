@@ -298,6 +298,12 @@ wire inst_lsr_ext               = ir_q == 8'h74;
 // NOP 
 wire inst_nop                    = ir_q == 8'h12;
 
+// Condition codes are tied to the most recent register/alu ops
+// We need one-hot signals to enable update of the condition codes.
+wire cc_up_a = inst_clra | inst_inca; 
+wire cc_up_b = inst_clrb | inst_incb; 
+
+
 // ------------------------------------------------------------
 // State machines.
 // Align the states with memory accesses.
