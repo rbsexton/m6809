@@ -642,6 +642,29 @@ always @(posedge clk) begin
   assert( (
     alu_op_inc + alu_op_clr
     ) <= 1 );
+
+  // Only one destination register at a time 
+  assert( (
+    alu_dest_a + alu_dest_b
+    ) <= 1 );
+
+  // We should never see more than one instruction active at a time.
+  assert( (
+    inst_adca_imm + inst_adca_idx + inst_adca_ext +
+    inst_adcb_imm + inst_adcb_dir + inst_adcb_idx +
+    inst_adcb_ext + 
+    
+    inst_adda_imm + inst_adda_dir + inst_adda_idx + inst_adda_ext +
+    inst_addb_imm + inst_addb_dir + inst_addb_idx + inst_addb_ext + 
+    inst_addd_imm + inst_addd_dir + inst_addd_idx + inst_addd_ext +
+        
+    inst_nega + inst_negb + 
+    inst_neg_dir + inst_neg_idx + inst_neg_ext +
+    
+    0  
+        
+    ) <= 1 );
+
   end
 
 
