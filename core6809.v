@@ -131,8 +131,8 @@ wire inst_bitb_idx              = ir_q == 8'he5;
 wire inst_bitb_ext              = ir_q == 8'hf5;
 
 // Clear Instructions
-wire inst_clra                  = ir_q == 8'h4f;
-wire inst_clrb                  = ir_q == 8'h5f;
+wire inst_clra                  = ir_q == 8'h4f; // Done 
+wire inst_clrb                  = ir_q == 8'h5f; // Done 
 
 wire inst_clr_dir               = ir_q == 8'h0f;
 wire inst_clr_idx               = ir_q == 8'h6f;
@@ -213,8 +213,8 @@ wire inst_eorb_idx              = ir_q == 8'he8;
 wire inst_eorb_ext              = ir_q == 8'hf8;
 
 // Increment  
-wire inst_inca                  = ir_q == 8'h4c;
-wire inst_incb                  = ir_q == 8'h5c;
+wire inst_inca                  = ir_q == 8'h4c; // Done
+wire inst_incb                  = ir_q == 8'h5c; // Done 
 
 wire inst_inc_dir               = ir_q == 8'h0c;
 wire inst_inc_idx               = ir_q == 8'h6c;
