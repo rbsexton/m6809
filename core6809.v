@@ -506,18 +506,24 @@ wire [15:0] pc_q_next = (
   ( {16{do_fetch_ir   }} & pc_q + 1                ) 
 );
 
-always @(posedge clk) begin 
-    pc_q <= pc_q_next;
-  end
-
 // Instruction Register 
 wire [7:0] ir_q_next = (
   ( {8{do_fetch_ir   }} & data_in ) 
   );
 
-always @(posedge clk) begin 
+// Run all of the critical system flops through async reset.
+always @(posedge clk or negedge reset_b ) begin 
+  if ( ~reset_b ) begin 
+    ir_q <= 8'h0;
+    pb_q <= 8'b0;
+    pc_q <= 16'b0;
+    end 
+  else begin 
     ir_q <= ir_q_next;
+    pc_q <= pc_q_next;
+    end 
   end
+
 
 // ----------------------------------------
 // Interfaces with the rest of the system
@@ -624,6 +630,19 @@ always @(posedge clk or negedge reset_b ) begin
     end 
   end
 
+// ------------------------------------------------------------------------
+// Validation Assertions.
+// icarus verilog apprarently support "simple immediate assertions"
+// ------------------------------------------------------------------------
+
+// Do some sanity checks on every clock 
+always @(posedge clk) begin
+
+  // Only a single one-hot alu operation should be active at once.
+  assert( (
+    alu_op_inc + alu_op_clr
+    ) <= 1 );
+  end
 
 
 endmodule

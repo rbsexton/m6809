@@ -29,6 +29,7 @@ module tb_6809reset;
 
 	initial begin
 		// Initialize Inputs
+    halt_b  = 1;
 		reset_b = 0;
 		// Wait 100 ns for global reset to finish
 		#100;

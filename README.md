@@ -25,3 +25,13 @@ This is a state machine.
 Basic simulation with Icarus Verilog.  
 
 ```iverilog -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
+
+```iverilog -gsupported-assertions -g2012  -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
+
+# Resources of note
+
+There are many, many things online.   The original datasheet is 
+available in OCR'd form here: https://archive.org/details/bitsavers_motorolada_3224333/page/n7/mode/2up 
+
+The data sheet contains a useful section called the 'Programmers Aid' that 
+has a very useful table of instruction.
