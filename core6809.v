@@ -341,6 +341,93 @@ wire inst_ror_dir               = ir_q == 8'h06;
 wire inst_ror_idx               = ir_q == 8'h66;
 wire inst_ror_ext               = ir_q == 8'h76;
 
+// Return from Interrupt 
+wire inst_rti                   = ir_q == 8'h3b;
+
+// Return from Subroutine 
+wire inst_rts                   = ir_q == 8'h39;
+
+// Subtract with Carry 
+wire inst_sbca_imm              = ir_q == 8'h82;
+wire inst_sbca_dir              = ir_q == 8'h92;
+wire inst_sbca_idx              = ir_q == 8'ha2;
+wire inst_sbca_ext              = ir_q == 8'hb2;
+
+wire inst_sbcb_imm              = ir_q == 8'hc2;
+wire inst_sbcb_dir              = ir_q == 8'hd2; 
+wire inst_sbcb_idx              = ir_q == 8'he2;
+wire inst_sbcb_ext              = ir_q == 8'hf2;
+
+// Sign Extend 
+wire inst_sex                   = ir_q == 8'h1d;
+
+// The many forms of store. 
+wire inst_sta_dir               = ir_q == 8'h97;
+wire inst_sta_idx               = ir_q == 8'ha7;
+wire inst_sta_ext               = ir_q == 8'hb7;
+
+wire inst_stb_dir               = ir_q == 8'hd7;
+wire inst_stb_idx               = ir_q == 8'he7;
+wire inst_stb_ext               = ir_q == 8'hf7;
+
+wire inst_std_dir               = ir_q == 8'hdd;
+wire inst_std_idx               = ir_q == 8'hed;
+wire inst_std_ext               = ir_q == 8'hfd;
+
+wire inst_sts                   = ir_q == 8'h10;
+wire inst_sts_dir               = pb_q == 8'hdf;
+wire inst_sts_idx               = pb_q == 8'hef;
+wire inst_sts_ext               = pb_q == 8'hff;
+
+wire inst_stu_dir               = ir_q == 8'hdf;
+wire inst_stu_idx               = ir_q == 8'hef;
+wire inst_stu_ext               = ir_q == 8'hff;
+
+wire inst_stx_dir               = ir_q == 8'h9f;
+wire inst_stx_idx               = ir_q == 8'haf;
+wire inst_stx_ext               = ir_q == 8'hbf;
+
+wire inst_sty                   = ir_q == 8'h10;
+wire inst_sty_dir               = pb_q == 8'h9f;
+wire inst_sty_idx               = pb_q == 8'haf;
+wire inst_sty_ext               = pb_q == 8'hbf;
+
+// Subtract without  Carry 
+wire inst_suba_imm              = ir_q == 8'h80;
+wire inst_suba_dir              = ir_q == 8'h90;
+wire inst_suba_idx              = ir_q == 8'ha0;
+wire inst_suba_ext              = ir_q == 8'hb0;
+
+wire inst_subb_imm              = ir_q == 8'hc0;
+wire inst_subb_dir              = ir_q == 8'hd0; 
+wire inst_subb_idx              = ir_q == 8'he0;
+wire inst_subb_ext              = ir_q == 8'hf0;
+
+wire inst_subd_imm              = ir_q == 8'h83;
+wire inst_subd_dir              = ir_q == 8'h93; 
+wire inst_subd_idx              = ir_q == 8'ha3;
+wire inst_subd_ext              = ir_q == 8'hb3;
+
+// Various forms of SWI 
+wire inst_swi                   =  ir_q == 8'h3f;
+wire inst_swi2                  = (ir_q == 8'h10) & (pb_q == 8'h3f);
+wire inst_swi3                  = (ir_q == 8'h11) & (pb_q == 8'h3f);
+
+// Sync 
+wire inst_sync                  =  ir_q == 8'h13;
+
+// Transfer 
+wire inst_tfr_imm               =  ir_q == 8'h1f;
+
+// Test  
+wire inst_tsta                  = ir_q == 8'h4d;
+wire inst_tstb                  = ir_q == 8'h5d;
+
+wire inst_tst_dir               = ir_q == 8'h0d;
+wire inst_tst_idx               = ir_q == 8'h6d;
+wire inst_tst_ext               = ir_q == 8'h7d;
+
+
 // ------------------------------------------------------------
 // State machines.
 // Align the states with memory accesses.
