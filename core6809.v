@@ -336,10 +336,12 @@ always @(posedge clk or negedge reset_b ) begin
 
 
 // ------------------------------------------------------------
-// Memory Control
+// Memory Access
 // Notes on the memory fetcher.    Per the data sheet, the 
 // program counter points the the next instruction to be 
-// executed.   This system manages the pc register.    
+// executed.   This subsection covers address generation 
+// and the first layer of things that drive it - 
+// instruction register     
 // ------------------------------------------------------------
 
 // When in reset, force this to FFFE  
@@ -378,16 +380,51 @@ always @(posedge clk) begin
     pc_q <= pc_q_next;
   end
 
+// Instruction Register 
+wire [7:0] ir_q_next = (
+  ( {8{do_fetch_ir   }} & data_in ) 
+  );
 
+always @(posedge clk) begin 
+    ir_q <= ir_q_next;
+  end
 
 // ----------------------------------------
 // Interfaces with the rest of the system
 // Assemble 16-bit things into a single register for 16-bit fetches.
-reg [15:0] mem_capture;
+// reg [15:0] mem_capture;
 
 // ----------------------------------------
 // Internals 
 // ----------------------------------------
+
+// Register updates.
+// Register A.
+wire [7:0] a_q_nxt = {
+  inst_clra ? 8'h00      :
+  inst_inca ? a_q + 1'b1 : 
+  a_q 
+  };
+    
+// Register B 
+wire [7:0] b_q_nxt = {
+  inst_clrb ? 8'h00      :
+  inst_incb ? b_q + 1'b1 : 
+  b_q 
+  };
+
+// Update the registers.   Tie this into the reset signal.  
+always @(posedge clk or negedge reset_b ) begin 
+  if ( ~reset_b ) begin 
+    a_q <= 8'h00;
+    b_q <= 8'h00;
+    end 
+  else begin 
+    a_q <= a_q_nxt;
+    b_q <= b_q_nxt;
+    end 
+  end
+
 
 
 endmodule
