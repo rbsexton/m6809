@@ -39,20 +39,17 @@ assign d_q = { a_q, b_q };
 
 reg  [ 7:0] dp_q;
 
-reg  cc_e_q;
-reg  cc_f_q;
-reg  cc_h_q;
-reg  cc_i_q;
-reg  cc_n_q;
-reg  cc_z_q;
-reg  cc_v_q;
-reg  cc_c_q;
+reg [7:0] cc_q; 
 
-wire [7:0] reg_cc; 
-assign reg_cc = {   
-  cc_e_q, cc_f_q, cc_h_q, cc_i_q, 
-  cc_n_q, cc_z_q, cc_v_q, cc_c_q 
-  };
+// Bit offsets for the condition code register 
+localparam CC_E = 4'd7; // Entire
+localparam CC_F = 4'd6; // FIRQ Mask
+localparam CC_H = 4'd5; // Half Carry 
+localparam CC_I = 4'd4; // IRQ Mask  
+localparam CC_N = 4'd3; // Negative 
+localparam CC_Z = 4'd2; // Zero  
+localparam CC_V = 4'd1; // Overflow 
+localparam CC_C = 4'd0; // Carry 
 
 reg [7:0] ir_q; // Instruction Register.
 reg [7:0] pb_q; // Post-Byte for 16-bit instructions.
@@ -234,42 +231,42 @@ wire inst_jsr_idx               = ir_q == 8'had;
 wire inst_jsr_ext               = ir_q == 8'hbd;
 
 // Many, Many forms of Load
-wire inst_lda_imm              = ir_q == 8'h86;
-wire inst_lda_dir              = ir_q == 8'h96;
-wire inst_lda_idx              = ir_q == 8'ha6;
-wire inst_lda_ext              = ir_q == 8'hb6;
+wire inst_lda_imm               = ir_q == 8'h86;
+wire inst_lda_dir               = ir_q == 8'h96;
+wire inst_lda_idx               = ir_q == 8'ha6;
+wire inst_lda_ext               = ir_q == 8'hb6;
 
-wire inst_ldb_imm              = ir_q == 8'hc6;
-wire inst_ldb_dir              = ir_q == 8'hd6;
-wire inst_ldb_idx              = ir_q == 8'he6;
-wire inst_ldb_ext              = ir_q == 8'hf6;
+wire inst_ldb_imm               = ir_q == 8'hc6;
+wire inst_ldb_dir               = ir_q == 8'hd6;
+wire inst_ldb_idx               = ir_q == 8'he6;
+wire inst_ldb_ext               = ir_q == 8'hf6;
 
-wire inst_ldd_imm              = ir_q == 8'hcc;
-wire inst_ldd_dir              = ir_q == 8'hdc;
-wire inst_ldd_idx              = ir_q == 8'hec;
-wire inst_ldd_ext              = ir_q == 8'hfc;
+wire inst_ldd_imm               = ir_q == 8'hcc;
+wire inst_ldd_dir               = ir_q == 8'hdc;
+wire inst_ldd_idx               = ir_q == 8'hec;
+wire inst_ldd_ext               = ir_q == 8'hfc;
 
-wire inst_lds                  = ir_q == 8'h10;
-wire inst_lds_imm              = pb_q == 8'hce;
-wire inst_lds_dir              = pb_q == 8'hde;
-wire inst_lds_idx              = pb_q == 8'hee;
-wire inst_lds_ext              = pb_q == 8'hfe;
+wire inst_lds                   = ir_q == 8'h10;
+wire inst_lds_imm               = pb_q == 8'hce;
+wire inst_lds_dir               = pb_q == 8'hde;
+wire inst_lds_idx               = pb_q == 8'hee;
+wire inst_lds_ext               = pb_q == 8'hfe;
 
-wire inst_ldu_imm              = ir_q == 8'hce;
-wire inst_ldu_dir              = ir_q == 8'hde;
-wire inst_ldu_idx              = ir_q == 8'hee;
-wire inst_ldu_ext              = ir_q == 8'hfe;
+wire inst_ldu_imm               = ir_q == 8'hce;
+wire inst_ldu_dir               = ir_q == 8'hde;
+wire inst_ldu_idx               = ir_q == 8'hee;
+wire inst_ldu_ext               = ir_q == 8'hfe;
 
-wire inst_ldx_imm              = ir_q == 8'h8e;
-wire inst_ldx_dir              = ir_q == 8'h9e;
-wire inst_ldx_idx              = ir_q == 8'hae;
-wire inst_ldx_ext              = ir_q == 8'hbe;
+wire inst_ldx_imm               = ir_q == 8'h8e;
+wire inst_ldx_dir               = ir_q == 8'h9e;
+wire inst_ldx_idx               = ir_q == 8'hae;
+wire inst_ldx_ext               = ir_q == 8'hbe;
 
-wire inst_ldy                  = ir_q == 8'h10;
-wire inst_ldy_imm              = pb_q == 8'h8e;
-wire inst_ldy_dir              = pb_q == 8'h9e;
-wire inst_ldy_idx              = pb_q == 8'hae;
-wire inst_ldy_ext              = pb_q == 8'hbe;
+wire inst_ldy                   = ir_q == 8'h10;
+wire inst_ldy_imm               = pb_q == 8'h8e;
+wire inst_ldy_dir               = pb_q == 8'h9e;
+wire inst_ldy_idx               = pb_q == 8'hae;
+wire inst_ldy_ext               = pb_q == 8'hbe;
 
 // Load Effective Address 
 wire inst_leas                  = ir_q == 8'h32;
@@ -293,16 +290,56 @@ wire inst_lsr_dir               = ir_q == 8'h04;
 wire inst_lsr_idx               = ir_q == 8'h64;
 wire inst_lsr_ext               = ir_q == 8'h74;
 
+// Multiply 
+wire inst_mul                   = ir_q == 8'h3d;
 
+// Negate 
+wire inst_nega                  = ir_q == 8'h40;
+wire inst_negb                  = ir_q == 8'h50;
+
+wire inst_neg_dir               = ir_q == 8'h00;
+wire inst_neg_idx               = ir_q == 8'h60;
+wire inst_neg_ext               = ir_q == 8'h70;
 
 // NOP 
-wire inst_nop                    = ir_q == 8'h12;
+wire inst_nop                   = ir_q == 8'h12;
 
-// Condition codes are tied to the most recent register/alu ops
-// We need one-hot signals to enable update of the condition codes.
-wire cc_up_a = inst_clra | inst_inca; 
-wire cc_up_b = inst_clrb | inst_incb; 
+// Or  
+wire inst_ora_imm               = ir_q == 8'h8a;
+wire inst_ora_dir               = ir_q == 8'h9a;
+wire inst_ora_idx               = ir_q == 8'haa;
+wire inst_ora_ext               = ir_q == 8'hba;
 
+wire inst_orb_imm               = ir_q == 8'hca;
+wire inst_orb_dir               = ir_q == 8'hda;
+wire inst_orb_idx               = ir_q == 8'hea;
+wire inst_orb_ext               = ir_q == 8'hfa;
+
+wire inst_orcc                  = ir_q == 8'hfa;
+
+// Pushes   
+wire inst_pshs                  = ir_q == 8'h34;
+wire inst_pshu                  = ir_q == 8'h36;
+
+// Pulls   
+wire inst_puls                  = ir_q == 8'h35;
+wire inst_pulu                  = ir_q == 8'h37;
+
+// Rotate Left 
+wire inst_rola                  = ir_q == 8'h49;
+wire inst_rolb                  = ir_q == 8'h59;
+
+wire inst_rol_dir               = ir_q == 8'h09;
+wire inst_rol_idx               = ir_q == 8'h69;
+wire inst_rol_ext               = ir_q == 8'h79;
+
+// Rotate Right  
+wire inst_rora                  = ir_q == 8'h46;
+wire inst_rorb                  = ir_q == 8'h56;
+
+wire inst_ror_dir               = ir_q == 8'h06;
+wire inst_ror_idx               = ir_q == 8'h66;
+wire inst_ror_ext               = ir_q == 8'h76;
 
 // ------------------------------------------------------------
 // State machines.
@@ -401,21 +438,90 @@ always @(posedge clk) begin
 // reg [15:0] mem_capture;
 
 // ----------------------------------------
-// Internals 
+// Arithmetic Logic Unit and Condition Codes
+// Run everything though an ALU so that its 
+// easier to capture condition codes. 
+// ----------------------------------------
+
+// On-hots for ALU Operations
+// Start with opcode detection. 
+wire alu_op_inc    = ir_q[3:0] == 4'hc;
+wire alu_op_clr    = ir_q[3:0] == 4'hf;
+
+// Input Register 
+wire alu_src_a     = ir_q[7:4] == 4'h4; // CLR, INC
+wire alu_src_b     = ir_q[7:4] == 4'h5; // CLR, INC
+
+// Output Register 
+wire alu_dest_a    = ir_q[7:4] == 4'h4; 
+wire alu_dest_b    = ir_q[7:4] == 4'h5; 
+
+wire [7:0] cc_q_next;
+
+// a signal that triggers condition code updates.
+wire alu_op = alu_op_clr | alu_op_inc;
+
+// Mux the inputs into ALU Port 0  
+wire [7:0] alu_in0 = {
+  alu_src_a ? a_q :
+  alu_src_b ? b_q :
+  8'h0 
+  };
+
+wire [7:0] alu_in1 = {
+  alu_op_clr ? alu_in0 :
+  alu_op_inc ?   8'h01 :
+  8'h00 
+  };
+
+// Perform CLR by XOR with self.
+wire [8:0] alu_out = {
+  alu_op_clr   ?   alu_in0 ^ alu_in1   :
+  alu_op_inc   ? ( alu_in0 + alu_in1 ) :
+  9'h00  
+  };
+
+// Half Carry is only defined for ADD and ADC 
+wire [4:0] alu_halfcarrysum = alu_in0[3:0] + alu_in1[3:0];
+wire       alu_halfcarry    = alu_halfcarrysum[4]; 
+
+// Condition code register bits.
+assign cc_q_next[CC_E] = cc_q[CC_E];   
+assign cc_q_next[CC_F] = cc_q[CC_F];   
+assign cc_q_next[CC_I] = cc_q[CC_I];   
+
+// ALU-Controlled bits.
+// Overflow appears to be when bit 8 differs from bit 7
+assign cc_q_next[CC_H] =                                     cc_q[CC_H] ;
+assign cc_q_next[CC_N] = alu_op ?    alu_out[8]            : cc_q[CC_N] ;
+assign cc_q_next[CC_Z] = alu_op ? ~( |alu_out)             : cc_q[CC_Z] ;
+assign cc_q_next[CC_V] = alu_op ?  alu_out[8] ^ alu_out[7] : cc_q[CC_V] ;
+assign cc_q_next[CC_C] = alu_op ?   alu_out[8]             : cc_q[CC_C] ;
+
+// Update the registers.   Tie this into the reset signal.  
+always @(posedge clk or negedge reset_b ) begin 
+  if ( ~reset_b ) begin 
+    cc_q <= 8'hff;
+    end 
+  else begin 
+    cc_q <= cc_q_next;
+    end 
+  end
+
+// ----------------------------------------
+// Register file operations 
 // ----------------------------------------
 
 // Register updates.
 // Register A.
 wire [7:0] a_q_nxt = {
-  inst_clra ? 8'h00      :
-  inst_inca ? a_q + 1'b1 : 
+  alu_dest_a ? alu_out[7:0] :
   a_q 
   };
     
 // Register B 
 wire [7:0] b_q_nxt = {
-  inst_clrb ? 8'h00      :
-  inst_incb ? b_q + 1'b1 : 
+  alu_dest_b ? alu_out[7:0] :
   b_q 
   };
 
