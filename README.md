@@ -18,7 +18,8 @@ Since this is a memory-mapped device, the peripherals are spliced in to the memo
 # Design Concepts
 The VHDL simulator thats out there on the web uses a state machine with decode.
 
-This is a state machine.
+This is a state machine.  The instruction set looks somewhat random in the big list,
+but the programmers reference makes thing more clear.   
 
 # Simulation 
 

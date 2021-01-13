@@ -427,6 +427,15 @@ wire inst_tst_dir               = ir_q == 8'h0d;
 wire inst_tst_idx               = ir_q == 8'h6d;
 wire inst_tst_ext               = ir_q == 8'h7d;
 
+// ------------------------------------------------------------
+// Instruction set metadata 
+// ------------------------------------------------------------
+
+wire inst_amode_inh = ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
+wire inst_amode_imm = ir_q[7:4] == 4'h8 | ir_q[7:4] == 4'hc; // 2 Byte  
+wire inst_amode_dir = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
+wire inst_amode_idx = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
+wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
 
 // ------------------------------------------------------------
 // State machines.
@@ -637,6 +646,11 @@ always @(posedge clk or negedge reset_b ) begin
 
 // Do some sanity checks on every clock 
 always @(posedge clk) begin
+
+  // Only one addressing mode at a time.
+  assert( (
+    inst_amode_inh + inst_amode_imm + inst_amode_dir + inst_amode_idx + inst_amode_ext
+    ) <= 1 );
 
   // Only a single one-hot alu operation should be active at once.
   assert( (
