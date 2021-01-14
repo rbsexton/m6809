@@ -31,8 +31,13 @@ Basic simulation with Icarus Verilog.
 
 # Resources of note
 
-There are many, many things online.   The original datasheet is 
-available in OCR'd form here: https://archive.org/details/bitsavers_motorolada_3224333/page/n7/mode/2up 
+There are many, many things online.  
+
+Pointers to compilers, assemblers, etc: http://www.brouhaha.com/~eric/embedded/6809/#fpga
+
+Original datasheet (via Wikipedia page) here: https://archive.org/details/bitsavers_motorolada_3224333/page/n7/mode/2up 
 
 The data sheet contains a useful section called the 'Programmers Aid' that 
 has a very useful table of instruction.
+
+HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet.fi/mc6809/Information/6809.htm
