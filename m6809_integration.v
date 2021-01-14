@@ -30,7 +30,7 @@ wire        data_rw_n;
 
 rom_boot u_rom (
   .sel                   (1'b1),
-  .a                     (address[3:0]),
+  .a                     (address[7:0]),
   .dout                  (core_data_in)
   );
 
