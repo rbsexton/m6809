@@ -1,12 +1,15 @@
 ; Generate a small ROM images for use in simulation.
-; asm6809 testbed.asm -o testbed.bin -l testbed.lst 
+; asm6809 validation.asm -o validation.bin -l validation.lst
+; Post-Process this into a ROM image with hexdump. 
 
 		org $FF00
 
+          ; Condition codes: H NZVC
 reset		
-		clra
-    inca
-    asla 
+		clra ; CC: X 0100 
+    inca ; CC: X ...X
+     
+    asla ; 
     asla 
 
     tfr cc,b ; Condition Code Check
