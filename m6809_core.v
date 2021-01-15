@@ -609,13 +609,17 @@ wire [7:0] cc_q_next;
 // http://c-jump.com/CIS77/CPU/Overflow/lecture.html#O01_0090_signed_overflow
 // Half Carry is only defined for ADD and ADC 
 
+// 5 bit of status, then the actual result.
+wire [12:0] alu_out;
+
 wire [8:0] alu_sum   = alu_in0      + alu_in1      + cc_q[CC_C];
 wire [4:0] alu_hsum  = alu_in0[3:0] + alu_in1[3:0] + cc_q[CC_C];
 
-wire        alu_h   = alu_hsum[4]; 
-wire        alu_n   = alu_sum[8:0];
+wire        alu_h   = alu_hsum[4];
+ 
+wire        alu_n   = alu_out[7];
 wire        alu_z   = ~( |alu_out[7:0]);
-wire        alu_v   = alu_sum[8] ^ cc_q[CC_C];
+wire        alu_v   = alu_out[8] ^ cc_q[CC_C];
 wire        alu_c   = alu_sum[8];
 
 // ----------------------------------------------
@@ -636,7 +640,7 @@ wire [12:0] alu_out_com = { cc_q[CC_H], alu_n, alu_z,  1'b0,       1'b1,        
 // Select the appropriate ALU Result
 // ----------------------------------
 // Perform CLR by XOR with self.
-wire [12:0] alu_out = {
+assign alu_out = {
   alu_op_clr   ? alu_out_clr :
   alu_op_inc   ? alu_out_inc :
   alu_op_asl   ? alu_out_asl :
