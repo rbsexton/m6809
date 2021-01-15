@@ -610,7 +610,7 @@ assign cc_q_next[CC_C] = alu_op    ?  alu_out[8]              : cc_q[CC_C] ;
 // Update the registers.   Tie this into the reset signal.  
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
-    cc_q <= 8'hff;
+    cc_q <= 8'b1101_0000;
     end 
   else begin 
     cc_q <= cc_q_next;
