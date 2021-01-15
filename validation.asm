@@ -6,15 +6,36 @@
 
           ; Condition codes: H NZVC
 reset		
-		clra ; CC: X 0100 
-    inca ; CC: X ...X
-     
-    asla ; 
+		clra 
+    inca
+    lda #$ff
+    inca
+
+    nop 
+    lda #$80
+    asra 
+    asra 
     asla 
+    
+    nop  
+
+
+    lda #$80
+    rola 
+    rola 
+    rola 
+    rola 
+    rola 
+    rola 
+
+    nop 
+    
+    asla    
+    lda #$7f
+    inca     ; This should trigger overflow
 
     tfr cc,b ; Condition Code Check
 
-    lda #$ff 
     
     inca 
     tfr cc,b
