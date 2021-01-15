@@ -569,13 +569,15 @@ wire alu_op_asl    = ir_q[3:0] == 4'h8;
 wire alu_op_asr    = ir_q[3:0] == 4'h7;
 wire alu_op_clr    = ir_q[3:0] == 4'hf;
 wire alu_op_inc    = ir_q[3:0] == 4'hc;
+wire alu_op_lsr    = ir_q[3:0] == 4'h4;
+wire alu_op_com    = ir_q[3:0] == 4'h3;
 
 
-// Input Register 
+// Input Register selection
 wire alu_src_a     = ir_q[7:4] == 4'h4; // CLR, INC
 wire alu_src_b     = ir_q[7:4] == 4'h5; // CLR, INC
 
-// Output Register 
+// Output Register destination
 wire alu_dest_a    = ir_q[7:4] == 4'h4; 
 wire alu_dest_b    = ir_q[7:4] == 4'h5; 
 
