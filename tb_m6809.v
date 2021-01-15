@@ -2,7 +2,7 @@
 
 // Testbench for 6809 SOC, reset code. 
 
-module tb_6809reset;
+module tb_6809;
 
 	// Inputs
 	reg reset_b;
@@ -18,7 +18,7 @@ module tb_6809reset;
 
   initial
     begin
-       $dumpfile("tb_m6809reset");
+       $dumpfile("tb_m6809");
        $dumpvars(0,uut);
     end
   
