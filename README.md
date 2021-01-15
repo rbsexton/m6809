@@ -1,25 +1,26 @@
 # A 6809 Clone in Verilog 
 
-The 6809 is fairly clean 8-bit MCU.
+The 6809 is fairly clean 8-bit MCU with rich addressing modes.  
 
-# Integration 
+# Project Organization
 
-# Design
+The CPU itself is in *m6809_core.v*.  It has ports that are similar to the ones 
+on a 6809 MCU.  
+
+The integration module, *m6809_integration.v* connects the CPU Core to memories
+and peripherals.  
+
+# Design Concepts
 
 The original device uses two clocks.   This is a one clock syncronous design.  
 
-# Organization
+The CPU consists of two interlocked state machines for memory load/store and 
+instruction fetch.  That was easier to understand than a single large state machine.
 
-The project consists of an integration layer, with ports that are generally 
-similar to what you'd see on an actual IC.  
+The rest of the design is made up of combinatorial logic. 
 
-Since this is a memory-mapped device, the peripherals are spliced in to the memory layer.
-
-# Design Concepts
-The VHDL simulator thats out there on the web uses a state machine with decode.
-
-This is a state machine.  The instruction set looks somewhat random in the big list,
-but the programmers reference makes thing more clear.   
+The instruction set looks somewhat random in the big list.  The patterns are 
+clearer in the the programmers reference.
 
 # Simulation 
 
@@ -27,7 +28,7 @@ Basic simulation with Icarus Verilog.
 
 ```iverilog -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
 
-```iverilog -gsupported-assertions -g2012  -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
+```iverilog -gsupported-assertions -g2012  -o tb_m6809 -s tb_6809   m6809_core.v mem-ram.v mem-rom.v m6809_integration.v tb_m6809.v  && vvp tb_m6809```
 
 # Resources of note
 

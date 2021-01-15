@@ -13,7 +13,7 @@ module core6809 (
   input              halt_b,    // Terminate after the current instruction.
   
   output wire [15:0] addr,      // External Memory address
-  output reg         data_rw_n, // Memory Write  
+  output             data_rw_n, // Memory Write  
 
   input        [7:0] data_in,   // External Memory data in
   output wire  [7:0] data_out   // External Memory data out     
@@ -427,140 +427,203 @@ wire inst_tst_ext               = ir_q == 8'h7d;
 // Instruction set metadata 
 // ------------------------------------------------------------
 
-wire inst_amode_inh = ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
+wire inst_amode_inh = ir_q[7:4] == 4'h1 | ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
 wire inst_amode_imm = ir_q[7:4] == 4'h8 | ir_q[7:4] == 4'hc; // 2 Byte  
 wire inst_amode_dir = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
 wire inst_amode_idx = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
 wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
 
-// ------------------------------------------------------------
-// State machines.
-// Align the states with memory accesses.
-// ------------------------------------------------------------
-
-reg  [3:0] state; 
-
-localparam st_reset           = 4'd0;
-localparam st_reset_fetch_msb = 4'd1; // Reset Vector MSB Fetch  
-localparam st_reset_fetch_lsb = 4'd2; // Reset Vector LSB Fetch 
-localparam st_fetch_ir        = 4'd3; // Reset IR Fetch 
-
-// Break the states out into one-hot signals.
-// use them in combinatorial logic to drive the state machine.
-wire do_reset       =    state == st_reset;
-wire do_fetchr_msb  =    state == st_reset_fetch_msb; // First fetch from reset.
-wire do_fetchr_lsb  =    state == st_reset_fetch_lsb; // Second fetch from reset.
-wire do_fetch_ir    =    state == st_fetch_ir;        // Fetch the first byte.
-
-// Product of Sums for master state machine.
-wire [3:0] state_nxt = (
-  ( {4{do_reset      }} & st_reset_fetch_msb ) | 
-  ( {4{do_fetchr_msb }} & st_reset_fetch_lsb ) |
-  ( {4{do_fetchr_lsb }} & st_fetch_ir ) |
-  ( {4{do_fetch_ir   }} & st_fetch_ir  )  
-  );
-
-always @(posedge clk or negedge reset_b ) begin 
-  if ( ~reset_b ) begin 
-    state <= st_reset;
-    end 
-  else begin 
-    state <= state_nxt;
-    end 
-  end
-
 
 // ------------------------------------------------------------
-// Memory Access
-// Notes on the memory fetcher.    Per the data sheet, the 
+// Memory Access mux.   Per the data sheet 
 // program counter points the the next instruction to be 
 // executed.   This subsection covers address generation 
 // and the first layer of things that drive it - 
-// instruction register     
+// either the program counter or the LSU
 // ------------------------------------------------------------
-
-reg  [15:0] addr_i;
-wire [15:0] addr_i_next;
-
 reg  [15:0] addr_d;
-wire [15:0] addr_d_next;
 
-wire        data_rw_n_next;
-
-wire addr_mode_i = 1; // Controls for the output 
+wire        addr_source_i; // Chooses LSU or Instruction fetch. 
 
 assign addr = (
-  addr_mode_i ? addr_i :
+  addr_source_i ? pc_q :
   addr_d
   );
 
-// --------------------------------------------
-// Separate Memory and address fetches 
-// --------------------------------------------
+// ------------------------------------------------------------
+// Handshake between LSU and instruction fetches
+// The Instruction Fetch/Execute system is in charge.
+// The LSU Unit owns the address bus.
+// ------------------------------------------------------------
 
-// When in reset, force this to FFFE  
+reg       lsu_load_msb;
+reg       lsu_load_lsb; 
+reg [3:0] lsu_load_dest; // Encoded in Transfer/Exchange Form
+
+localparam REG_DEST_PC = 4'b0101;
+
+wire lsu_load_pc = lsu_load_dest == REG_DEST_PC; 
+
+// ------------------------------------------------------------
+// The Load/Store Unit
+// Handle data moves separately from instruction fetches.
+// The LSU handles the pc fetch at reset.
+//
+// State machine notes.  
+// The LSU will need to handle loads initiated by different instructions
+// in a variety of address modes.   There will ultimately be some 
+// sort of ALU like construction in here.
+// ------------------------------------------------------------
+wire [15:0] addr_d_next;
+wire [15:0] addr_d_plus1 = addr_d + 1;
+
+reg   [3:0] lsu_state;
+wire  [3:0] lsu_state_next;
+
+reg   [7:0] lsu_msb;      // We need to stage this
+reg   [7:0] lsu_msb_next; 
+
+wire [15:0] lsu_out; // This gets grabbed by the register.
+
+localparam st_lsu_idle            = 4'd0;
+localparam st_lsu_ld_msb          = 4'd1;
+localparam st_lsu_ld_lsb          = 4'd2;
+
+wire lsu_idle    = lsu_state == st_lsu_idle;
+wire lsu_ld_msb  = lsu_state == st_lsu_ld_msb; // Initial State
+wire lsu_ld_lsb  = lsu_state == st_lsu_ld_lsb;
+
+// The address bus belongs to the instruction fetch 
+// system when the LSU isn't using it.
+assign addr_source_i = lsu_idle;
+
+// The LSU is the only thing that can do writes.
+assign data_rw_n = 1'b1; // Default to read.
+
+assign lsu_state_next =
+  ( {4{ lsu_ld_msb}} & st_lsu_ld_lsb ) |
+  ( {4{ lsu_ld_lsb}} & st_lsu_idle   ) 
+  ;
+
+assign addr_d_next = 
+  ( {16{ lsu_ld_msb}} & addr_d_plus1 )
+  ;
+
+
+assign lsu_out = { lsu_msb, data_in }; // Port memory data straight into register
+
+assign lsu_msb_next = lsu_ld_msb ? data_in : lsu_msb;
+
 always @(posedge clk or negedge reset_b ) begin 
-  if ( ~reset_b ) begin
-    addr_i    <= 16'hfffe;
-    addr_d    <= 16'h0000;
-    data_rw_n <= 1'b1;
+  if ( ~reset_b ) begin 
+    lsu_state <= st_lsu_ld_msb;
+    addr_d    <= 16'hfffe;
     end 
   else begin 
-    addr_i    <= addr_i_next;
+    lsu_state <= lsu_state_next;
     addr_d    <= addr_d_next;
-    data_rw_n <= data_rw_n_next;
+    lsu_msb   <= lsu_msb_next;
     end 
   end
 
-// Address Generation logic product of sums notation.
-// The Program counter state machine is closely coupled 
-// to the address generation state machine.
-// MSB is used for the RW control.
+// ------------------------------------------------------------
+// Instruction/Argument Fetch
+// Its possible to skip the ir and go directly to execution for
+// inherent instructions.   That would create timing delays,
+// so pipeline via the ir.   The longest opcode is made up 
+// of 4 bytes
+// ------------------------------------------------------------
+wire addr_source_i_next = 1'b0;
 
-wire [15:0] pc_q_1 = pc_q + 1;
+always @(posedge clk or negedge reset_b ) begin 
+  if ( ~reset_b ) begin 
+    lsu_load_dest <= REG_DEST_PC; // Fetch the PC first.
+    end 
+  else begin 
+    end 
+  end
 
-wire [16:0] memctl_next = (
-  ( {17{ do_reset     }} & { 1'b1, 16'hfffe }) |
-  ( {17{do_fetchr_msb }} & { 1'b1, 16'hffff }) |
-  ( {17{do_fetchr_lsb }} & { 1'b1,     pc_q }) |
-  ( {17{do_fetch_ir   }} & { 1'b1,   pc_q_1 } ) 
-);
+// One-hot state.
+reg  [4:0] fetch_state;
 
-assign data_rw_n_next = memctl_next[16];
-assign addr_i_next    = memctl_next[15:0];
+localparam st_fetch_wait   = 5'b0_0001; // Data Wait 
+localparam st_fetch_ir     = 5'b0_0010; // Byte 0: IR Fetch 
+localparam st_fetch_pb_imm = 5'b0_0100; // Byte 1: Post Byte / Immediate Fetch   
+localparam st_fetch_b2     = 5'b0_1000; // Byte 2   
+localparam st_fetch_b3     = 5'b1_0000; // Byte 3   
 
-// Program Counter Control.
-// This needs to point to the next thing to fetch.
-wire [15:0] pc_q_next = (
-  ( {16{do_reset      }} & 16'h0000                ) |
-  ( {16{do_fetchr_msb }} & { data_in, 8'b0 }       ) |
-  ( {16{do_fetchr_lsb }} & { pc_q[15:8], data_in } ) |
-  ( {16{do_fetch_ir   }} & pc_q + 1                ) 
-);
+wire fetch_wait            = fetch_state[0];
+wire fetch_ir              = fetch_state[1];
+wire fetch_pb_imm          = fetch_state[2];
+wire fetch_b2              = fetch_state[3];
+wire fetch_b3              = fetch_state[4];
 
-// Instruction Register 
-wire [7:0] ir_q_next = (
-  ( {8{do_fetch_ir   }} & data_in ) 
+// We need to do some instruction decode to decide whats next.
+wire [4:0] fetch_state_next = (
+  ( {5{fetch_wait      & ~lsu_idle       }} & st_fetch_wait )   | 
+  ( {5{fetch_wait      &  lsu_idle       }} & st_fetch_ir )     | 
+  ( {5{fetch_ir        & inst_amode_inh  }} & st_fetch_ir )     |
+  ( {5{fetch_ir        & inst_amode_imm  }} & st_fetch_pb_imm ) |  
+  ( {5{fetch_pb_imm    & inst_amode_imm  }} & st_fetch_ir     )  
   );
 
-// Run all of the critical system flops through async reset.
+// Instruction Register and post-byte.
+wire [7:0] ir_q_next = {
+  fetch_wait    & lsu_idle       ? data_in :
+  fetch_ir      & inst_amode_inh ? data_in :
+  fetch_pb_imm  & inst_amode_imm ? data_in :
+  ir_q
+  };
+   
+wire [7:0] pb_q_next = (fetch_ir & inst_amode_imm) ? data_in : pb_q;
+
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
     ir_q <=  8'h0;
     pb_q <=  8'b0;
-    pc_q <= 16'b0;
     end 
   else begin 
     ir_q <= ir_q_next;
-    pc_q <= pc_q_next;
+    pb_q <= pb_q_next;
+    end 
+  end
+
+// The system should start up in LSU Mode to fetch the IR.
+always @(posedge clk or negedge reset_b ) begin 
+  if ( ~reset_b ) begin 
+    fetch_state <= st_fetch_wait ;
+    end 
+  else begin 
+    fetch_state <= fetch_state_next;
     end 
   end
 
 
-// ----------------------------------------
-// Interfaces with the rest of the system
-// Assemble 16-bit things into a single register for 16-bit fetches.
-// reg [15:0] mem_capture;
+//------------------------------------------
+// Program Counter.
+// This advances when there are no branches.
+//------------------------------------------
+
+wire        reset_load = lsu_load_pc & lsu_ld_lsb;
+wire [15:0] pc_q_1     = pc_q + 1;
+
+
+wire [15:0] pc_q_next = 
+  ( {16{reset_load             }} & lsu_out   ) |
+  ( {16{fetch_wait &  lsu_idle }} & pc_q_1    ) | 
+  ( {16{fetch_ir               }} & pc_q_1    ) |
+  ( {16{fetch_pb_imm           }} & pc_q_1    )
+  ;
+
+always @(posedge clk or negedge reset_b ) begin 
+  if ( ~reset_b ) begin 
+    pc_q <= 16'b0;
+    end 
+  else begin 
+    pc_q <= pc_q_next;
+    end 
+  end
+
 
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
