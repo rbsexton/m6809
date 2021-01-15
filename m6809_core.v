@@ -655,13 +655,17 @@ always @(posedge clk or negedge reset_b ) begin
 
 // On-hots for ALU Operations
 // Start with opcode detection. 
-wire alu_op_asl    = ir_q[3:0] == 4'h8;
-wire alu_op_asr    = ir_q[3:0] == 4'h7;
-wire alu_op_clr    = ir_q[3:0] == 4'hf;
-wire alu_op_inc    = ir_q[3:0] == 4'hc;
-wire alu_op_lsr    = ir_q[3:0] == 4'h4;
 wire alu_op_com    = ir_q[3:0] == 4'h3;
-wire alu_op_ld     = ir_q[3:0] == 4'h6;
+wire alu_op_lsr    = ir_q[3:0] == 4'h4;
+wire alu_op_ld     = ir_q[3:0] == 4'h6 & ~inst_amode_inh;
+
+wire alu_op_ror    = ir_q[3:0] == 4'h6 &  inst_amode_inh;
+
+wire alu_op_asr    = ir_q[3:0] == 4'h7;
+wire alu_op_asl    = ir_q[3:0] == 4'h8;
+wire alu_op_rol    = ir_q[3:0] == 4'h9;
+wire alu_op_inc    = ir_q[3:0] == 4'hc;
+wire alu_op_clr    = ir_q[3:0] == 4'hf;
 
 // a signal that triggers condition code updates.
 // The overflow bit is a little odd.  Not all instructions support it.
@@ -723,13 +727,18 @@ wire        alu_c   = alu_sum[8];
 // Make separate vectors for all of the ALU operators.
 // do it this way so that its easy to see and manage the condition codes.
 // alu_h, alu_n, alu_z, alu_v, alu_c 
-wire [12:0] alu_out_clr = { cc_q[CC_H], alu_n, alu_z,  1'b0,       1'b0,                    8'h00 };
-wire [12:0] alu_out_inc = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_sum[8],             alu_sum[7:0] };
-wire [12:0] alu_out_asl = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[7],       alu_in0[6:0], 1'b0 };
-wire [12:0] alu_out_asr = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[0], alu_in0[7], alu_in0[7:1] };
-wire [12:0] alu_out_lsr = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[0],       1'b0, alu_in0[7:1] };
-wire [12:0] alu_out_com = { cc_q[CC_H], alu_n, alu_z,  1'b0,       1'b1,            ~alu_in0[7:0] };
-wire [12:0] alu_out_ld  = { cc_q[CC_H], alu_n, alu_z,  1'b0, cc_q[CC_H],             alu_in0[7:0] };
+wire [12:0] alu_out_clr = { cc_q[CC_H], alu_n, alu_z,      1'b0,       1'b0,                    8'h00 };
+wire [12:0] alu_out_inc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_sum[8],             alu_sum[7:0] };
+
+wire [12:0] alu_out_asl = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7],       alu_in0[6:0], 1'b0 };
+wire [12:0] alu_out_rol = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7], alu_in0[6:0], cc_q[CC_C] };
+
+wire [12:0] alu_out_asr = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[0], alu_in0[7], alu_in0[7:1] };
+wire [12:0] alu_out_lsr = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[0],       1'b0, alu_in0[7:1] };
+wire [12:0] alu_out_ror = { cc_q[CC_H], alu_n, alu_z, cc_q[CC_H], alu_in0[0], cc_q[CC_C], alu_in0[7:1] };
+
+wire [12:0] alu_out_com = { cc_q[CC_H], alu_n, alu_z,       1'b0,       1'b1,            ~alu_in0[7:0] };
+wire [12:0] alu_out_ld  = { cc_q[CC_H], alu_n, alu_z,       1'b0, cc_q[CC_H],             alu_in0[7:0] };
 
 // ----------------------------------
 // Select the appropriate ALU Result
@@ -739,7 +748,9 @@ assign alu_out = {
   alu_op_clr   ? alu_out_clr :
   alu_op_inc   ? alu_out_inc :
   alu_op_asl   ? alu_out_asl :
+  alu_op_rol   ? alu_out_rol :
   alu_op_asr   ? alu_out_asr :  
+  alu_op_ror   ? alu_out_ror :  
   alu_op_ld    ? alu_out_ld  :  
   13'h00  
   };
