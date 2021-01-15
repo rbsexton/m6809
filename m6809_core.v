@@ -55,11 +55,32 @@ localparam CC_C = 4'd0; // Carry
 reg [7:0] ir_q; // Instruction Register.
 reg [7:0] pb_q; // Post-Byte for 16-bit instructions.
 
+
+// --------------------------------------------
+// One-hot Instruction Fetch state.
+// --------------------------------------------
+reg  [4:0] fetch_state;
+
+localparam st_fetch_wait   = 5'b0_0001; // Data Wait 
+localparam st_fetch_ir     = 5'b0_0010; // Byte 0: IR Fetch 
+localparam st_fetch_pb_imm = 5'b0_0100; // Byte 1: Post Byte / Immediate Fetch   
+localparam st_fetch_b2     = 5'b0_1000; // Byte 2   
+localparam st_fetch_b3     = 5'b1_0000; // Byte 3   
+
+wire fetch_wait            = fetch_state[0];
+wire fetch_ir              = fetch_state[1];
+wire fetch_pb_imm          = fetch_state[2];
+wire fetch_b2              = fetch_state[3];
+wire fetch_b3              = fetch_state[4];
+
+
+
 // ------------------------------------------------------------
 // Instruction decode.
 // Wires for every instruction, in alphabetical order.
 // Sub-Organize them by addressing mode.
-// Hopefully the patterns will become apparent.
+// These signals should become active when all instruction 
+// and argument fetches are complete.
 // ------------------------------------------------------------
 
 wire inst_abx                   = ir_q == 8'h3a;
@@ -232,12 +253,12 @@ wire inst_jsr_idx               = ir_q == 8'had;
 wire inst_jsr_ext               = ir_q == 8'hbd;
 
 // Many, Many forms of Load
-wire inst_lda_imm               = ir_q == 8'h86;
+wire inst_lda_imm               = ir_q == 8'h86 & fetch_pb_imm ; // Done
 wire inst_lda_dir               = ir_q == 8'h96;
 wire inst_lda_idx               = ir_q == 8'ha6;
 wire inst_lda_ext               = ir_q == 8'hb6;
 
-wire inst_ldb_imm               = ir_q == 8'hc6;
+wire inst_ldb_imm               = ir_q == 8'hc6 & fetch_pb_imm ; // Done 
 wire inst_ldb_dir               = ir_q == 8'hd6;
 wire inst_ldb_idx               = ir_q == 8'he6;
 wire inst_ldb_ext               = ir_q == 8'hf6;
@@ -532,6 +553,9 @@ always @(posedge clk or negedge reset_b ) begin
 // inherent instructions.   That would create timing delays,
 // so pipeline via the ir.   The longest opcode is made up 
 // of 4 bytes
+//
+// States are defined at the top, prior to the 
+// instruction decoder
 // ------------------------------------------------------------
 wire addr_source_i_next = 1'b0;
 
@@ -542,21 +566,6 @@ always @(posedge clk or negedge reset_b ) begin
   else begin 
     end 
   end
-
-// One-hot state.
-reg  [4:0] fetch_state;
-
-localparam st_fetch_wait   = 5'b0_0001; // Data Wait 
-localparam st_fetch_ir     = 5'b0_0010; // Byte 0: IR Fetch 
-localparam st_fetch_pb_imm = 5'b0_0100; // Byte 1: Post Byte / Immediate Fetch   
-localparam st_fetch_b2     = 5'b0_1000; // Byte 2   
-localparam st_fetch_b3     = 5'b1_0000; // Byte 3   
-
-wire fetch_wait            = fetch_state[0];
-wire fetch_ir              = fetch_state[1];
-wire fetch_pb_imm          = fetch_state[2];
-wire fetch_b2              = fetch_state[3];
-wire fetch_b3              = fetch_state[4];
 
 // We need to do some instruction decode to decide whats next.
 wire [4:0] fetch_state_next = (
@@ -652,6 +661,7 @@ wire alu_op_clr    = ir_q[3:0] == 4'hf;
 wire alu_op_inc    = ir_q[3:0] == 4'hc;
 wire alu_op_lsr    = ir_q[3:0] == 4'h4;
 wire alu_op_com    = ir_q[3:0] == 4'h3;
+wire alu_op_ld     = ir_q[3:0] == 4'h6;
 
 // a signal that triggers condition code updates.
 // The overflow bit is a little odd.  Not all instructions support it.
@@ -659,7 +669,9 @@ wire alu_op     = alu_op_clr | alu_op_com | alu_op_inc | alu_op_asl | alu_op_asr
 wire alu_op_ov  = alu_op_clr | alu_op_inc ;
 
 // Input Register selection
-wire alu_src_a     = ir_q[7:4] == 4'h4; // CLR, INC
+wire alu_src_a    = ir_q[7:4] == 4'h4; // CLR, INC
+wire alu_src_pb   = ir_q[7:4] == 4'h8; // lda 
+
 wire alu_src_b     = ir_q[7:4] == 4'h5; // CLR, INC
 
 // Output Register destination
@@ -668,8 +680,9 @@ wire alu_dest_b    = ir_q[7:4] == 4'h5;
 
 // Mux the inputs into ALU Port 0  
 wire [7:0] alu_in0 = {
-  alu_src_a ? a_q :
-  alu_src_b ? b_q :
+  alu_src_a  ? a_q  :
+  alu_src_pb ? pb_q : 
+  alu_src_b  ? b_q  :
   8'h0 
   };
 
@@ -716,6 +729,7 @@ wire [12:0] alu_out_asl = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[7],       a
 wire [12:0] alu_out_asr = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[0], alu_in0[7], alu_in0[7:1] };
 wire [12:0] alu_out_lsr = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[0],       1'b0, alu_in0[7:1] };
 wire [12:0] alu_out_com = { cc_q[CC_H], alu_n, alu_z,  1'b0,       1'b1,            ~alu_in0[7:0] };
+wire [12:0] alu_out_ld  = { cc_q[CC_H], alu_n, alu_z,  1'b0, cc_q[CC_H],             alu_in0[7:0] };
 
 // ----------------------------------
 // Select the appropriate ALU Result
@@ -726,6 +740,7 @@ assign alu_out = {
   alu_op_inc   ? alu_out_inc :
   alu_op_asl   ? alu_out_asl :
   alu_op_asr   ? alu_out_asr :  
+  alu_op_ld    ? alu_out_ld  :  
   13'h00  
   };
 
@@ -737,14 +752,6 @@ assign cc_q_next[CC_H] = alu_out[12];
 assign cc_q_next[CC_E] = cc_q[CC_E];   
 assign cc_q_next[CC_F] = cc_q[CC_F];   
 assign cc_q_next[CC_I] = cc_q[CC_I];   
-
-// ALU-Controlled bits.
-// Overflow appears to be when bit 8 differs from bit 7
-//assign cc_q_next[CC_H] =                                     cc_q[CC_H] ;
-//assign cc_q_next[CC_N] = alu_op    ?    alu_out[7]            : cc_q[CC_N] ;
-//assign cc_q_next[CC_Z] = alu_op    ? ~( |alu_out)             : cc_q[CC_Z] ;
-//assign cc_q_next[CC_V] = alu_op_ov ?  alu_out[8] ^ alu_out[7] : cc_q[CC_V] ;
-//assign cc_q_next[CC_C] = alu_op    ?  alu_out[8]              : cc_q[CC_C] ;
 
 // Update the registers.   Tie this into the reset signal.  
 always @(posedge clk or negedge reset_b ) begin 
@@ -760,16 +767,17 @@ always @(posedge clk or negedge reset_b ) begin
 // Register file operations 
 // ----------------------------------------
 
-// Register updates.
-// Register A.
+// ----------- Register A ------------
 wire [7:0] a_q_nxt = {
-  alu_dest_a ? alu_out[7:0] :
+  alu_dest_a   ? alu_out[7:0] :
+  inst_lda_imm ? alu_out[7:0] :
   a_q 
   };
     
-// Register B 
+// ----------- Register B ------------
 wire [7:0] b_q_nxt = {
-  alu_dest_b ? alu_out[7:0] :
+  alu_dest_b   ? alu_out[7:0] :
+  inst_ldb_imm ? alu_out[7:0] :
   b_q 
   };
 

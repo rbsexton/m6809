@@ -12,7 +12,7 @@ and peripherals.
 
 # Design Concepts
 
-The original device uses two clocks.   This is a one clock syncronous design.  
+The original device uses two clocks.   This is a one clock synchronous design.  
 
 The CPU consists of two interlocked state machines for memory load/store and 
 instruction fetch.  That was easier to understand than a single large state machine.
@@ -21,6 +21,9 @@ The rest of the design is made up of combinatorial logic.
 
 The instruction set looks somewhat random in the big list.  The patterns are 
 clearer in the the programmers reference.
+
+Things work better if all data passes through the ALU because the ALU owns the 
+condition codes register. 
 
 # Simulation 
 
