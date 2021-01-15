@@ -274,13 +274,8 @@ wire inst_leau                  = ir_q == 8'h33;
 wire inst_leax                  = ir_q == 8'h30;
 wire inst_leay                  = ir_q == 8'h31;
 
-// Logical Shift Left
-wire inst_lsla                  = ir_q == 8'h48;
-wire inst_lslb                  = ir_q == 8'h58;
-
-wire inst_lsl_dir               = ir_q == 8'h08;
-wire inst_lsl_idx               = ir_q == 8'h68;
-wire inst_lsl_ext               = ir_q == 8'h78;
+// Logical Shift Left is the same thing as 
+// Arithmetic shift left. 
 
 // Logical Shift Right
 wire inst_lsra                  = ir_q == 8'h44;
