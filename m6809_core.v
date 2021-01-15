@@ -572,6 +572,10 @@ wire alu_op_inc    = ir_q[3:0] == 4'hc;
 wire alu_op_lsr    = ir_q[3:0] == 4'h4;
 wire alu_op_com    = ir_q[3:0] == 4'h3;
 
+// a signal that triggers condition code updates.
+// The overflow bit is a little odd.  Not all instructions support it.
+wire alu_op     = alu_op_clr | alu_op_com | alu_op_inc | alu_op_asl | alu_op_asr | alu_op_lsr;
+wire alu_op_ov  = alu_op_clr | alu_op_inc ;
 
 // Input Register selection
 wire alu_src_a     = ir_q[7:4] == 4'h4; // CLR, INC
@@ -580,13 +584,6 @@ wire alu_src_b     = ir_q[7:4] == 4'h5; // CLR, INC
 // Output Register destination
 wire alu_dest_a    = ir_q[7:4] == 4'h4; 
 wire alu_dest_b    = ir_q[7:4] == 4'h5; 
-
-wire [7:0] cc_q_next;
-
-// a signal that triggers condition code updates.
-// The overflow bit is a little odd.  Not all instructions support it.
-wire alu_op     = alu_op_clr | alu_op_inc | alu_op_asl | alu_op_asr;
-wire alu_op_ov  = alu_op_clr | alu_op_inc;
 
 // Mux the inputs into ALU Port 0  
 wire [7:0] alu_in0 = {
