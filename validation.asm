@@ -19,9 +19,13 @@ reset
     
     nop  
 
-
+    ; Jump test
     lda #$80
-    rola 
+loop 
+    rora 
+    bcc  loop 
+    
+    nop
     rola 
     rola 
     rola 
@@ -29,6 +33,10 @@ reset
     rola 
 
     nop 
+
+
+
+
     
     asla    
     lda #$7f

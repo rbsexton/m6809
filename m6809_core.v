@@ -141,6 +141,35 @@ wire inst_asr_dir               = ir_q == 8'h07;
 wire inst_asr_idx               = ir_q == 8'h67;
 wire inst_asr_ext               = ir_q == 8'h77;
 
+// Short Branches 
+wire inst_bra                   = ir_q == 8'h20; 
+wire inst_brn                   = ir_q == 8'h21;  
+wire inst_lbrn                  = ir_q == 8'h10 & pb_q == 8'h21;
+
+wire inst_bsr                   = ir_q == 8'h8d;
+wire inst_lbsr                  = ir_q == 8'h17;
+
+wire inst_bmi                   = ir_q == 8'h2b;
+wire inst_bpl                   = ir_q == 8'h2a;
+wire inst_beq                   = ir_q == 8'h27;
+wire inst_bne                   = ir_q == 8'h26;
+wire inst_bvs                   = ir_q == 8'h29;
+wire inst_bvc                   = ir_q == 8'h28;
+wire inst_bcs                   = ir_q == 8'h25;
+wire inst_bcc                   = ir_q == 8'h24;
+
+
+
+// wire inst_bge                   = ir_q == 8'h2c;
+// wire inst_bgt                   = ir_q == 8'h2e;
+// wire inst_bhi                   = ir_q == 8'h22;
+// wire inst_bhs                   = ir_q == 8'h24; // same as bcc 
+// wire inst_ble                   = ir_q == 8'h2f; 
+// wire inst_blo                   = ir_q == 8'h25; // same as bcs
+// wire inst_bls                   = ir_q == 8'h24; //  
+// wire inst_blt                   = ir_q == 8'h24;
+
+
 // Bit tests 
 wire inst_bita_imm              = ir_q == 8'h85;
 wire inst_bita_dir              = ir_q == 8'h95;
@@ -449,7 +478,7 @@ wire inst_tst_ext               = ir_q == 8'h7d;
 // ------------------------------------------------------------
 
 wire inst_amode_inh = ir_q[7:4] == 4'h1 | ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
-wire inst_amode_imm = ir_q[7:4] == 4'h8 | ir_q[7:4] == 4'hc; // 2 Byte  
+wire inst_amode_imm = ir_q[7:4] == 4'h2 | ir_q[7:4] == 4'h8 | ir_q[7:4] == 4'hc; // 2 Byte  
 wire inst_amode_dir = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
 wire inst_amode_idx = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
 wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
@@ -788,12 +817,22 @@ always @(posedge clk or negedge reset_b ) begin
 wire        reset_load = lsu_load_pc & lsu_ld_lsb;
 wire [15:0] pc_q_1     = pc_q + 1;
 
+// Short Branches
+wire [15:0] pc_q_branch = pc_q + { {8{pb_q[7]}} , pb_q};
+wire        inst_branch = ir_q[7:4] == 4'h2; 
+
+wire do_branch =
+  inst_branch & fetch_pb_imm & (
+    ( ir_q[3:0] == 4'h5 &  cc_q[CC_C] ) | // BCS
+    ( ir_q[3:0] == 4'h4 & ~cc_q[CC_C] )   // BCC
+  ); 
 
 wire [15:0] pc_q_next = 
-  ( {16{reset_load             }} & lsu_out   ) |
-  ( {16{fetch_wait &  lsu_idle }} & pc_q_1    ) | 
-  ( {16{fetch_ir               }} & pc_q_1    ) |
-  ( {16{fetch_pb_imm           }} & pc_q_1    )
+  ( {16{reset_load                }} & lsu_out     ) |
+  ( {16{fetch_wait &  lsu_idle    }} & pc_q_1      ) | 
+  ( {16{fetch_ir                  }} & pc_q_1      ) |
+  ( {16{fetch_pb_imm & ~do_branch }} & pc_q_1      ) |
+  ( {16{fetch_pb_imm &  do_branch }} & pc_q_branch )
   ;
 
 always @(posedge clk or negedge reset_b ) begin 
@@ -851,6 +890,15 @@ always @(posedge clk) begin
     0  
         
     ) <= 1 );
+
+    // We should never see more than one branch instruction active at a time.
+    assert( (
+      inst_bra + inst_brn + inst_lbrn + 
+      inst_bsr + inst_lbsr +
+      inst_bmi + inst_bpl + inst_beq + inst_bne + 
+      inst_bvs + inst_bvc + inst_bcs + inst_bcc 
+    ) <= 1 );
+
 
   end
 

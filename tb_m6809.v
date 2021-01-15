@@ -35,7 +35,7 @@ module tb_6809;
 		#100;
     reset_b = 1;
 
-    #500;
+    #2000;
     
     $finish; 
     end
