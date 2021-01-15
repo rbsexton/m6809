@@ -12,7 +12,7 @@ module core6809 (
   
   input              halt_b,    // Terminate after the current instruction.
   
-  output reg  [15:0] addr,      // External Memory address
+  output wire [15:0] addr,      // External Memory address
   output reg         data_rw_n, // Memory Write  
 
   input        [7:0] data_in,   // External Memory data in
@@ -479,17 +479,35 @@ always @(posedge clk or negedge reset_b ) begin
 // instruction register     
 // ------------------------------------------------------------
 
-wire [15:0] addr_next;
+reg  [15:0] addr_i;
+wire [15:0] addr_i_next;
+
+reg  [15:0] addr_d;
+wire [15:0] addr_d_next;
+
 wire        data_rw_n_next;
+
+wire addr_mode_i = 1; // Controls for the output 
+
+assign addr = (
+  addr_mode_i ? addr_i :
+  addr_d
+  );
+
+// --------------------------------------------
+// Separate Memory and address fetches 
+// --------------------------------------------
 
 // When in reset, force this to FFFE  
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin
-    addr      <= 16'hfffe;
+    addr_i    <= 16'hfffe;
+    addr_d    <= 16'h0000;
     data_rw_n <= 1'b1;
     end 
   else begin 
-    addr      <= addr_next;
+    addr_i    <= addr_i_next;
+    addr_d    <= addr_d_next;
     data_rw_n <= data_rw_n_next;
     end 
   end
@@ -509,7 +527,7 @@ wire [16:0] memctl_next = (
 );
 
 assign data_rw_n_next = memctl_next[16];
-assign addr_next      = memctl_next[15:0];
+assign addr_i_next    = memctl_next[15:0];
 
 // Program Counter Control.
 // This needs to point to the next thing to fetch.
