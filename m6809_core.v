@@ -598,18 +598,55 @@ wire [7:0] alu_in1 = {
   8'h00 
   };
 
+// ----------------------------------------------
+// ALU Condition Code management
+// ----------------------------------------------
+wire [7:0] cc_q_next;
+
+// Define all of the logic for the ALU flags.
+// Start with the sum and half sum. 
+// Lengthy discussion of overflow:
+// http://c-jump.com/CIS77/CPU/Overflow/lecture.html#O01_0090_signed_overflow
+// Half Carry is only defined for ADD and ADC 
+
+wire [8:0] alu_sum   = alu_in0      + alu_in1      + cc_q[CC_C];
+wire [4:0] alu_hsum  = alu_in0[3:0] + alu_in1[3:0] + cc_q[CC_C];
+
+wire        alu_h   = alu_hsum[4]; 
+wire        alu_n   = alu_sum[8:0];
+wire        alu_z   = ~( |alu_out[7:0]);
+wire        alu_v   = alu_sum[8] ^ cc_q[CC_C];
+wire        alu_c   = alu_sum[8];
+
+// ----------------------------------------------
+// ALU Operators
+// ----------------------------------------------
+
+// Make separate vectors for all of the ALU operators.
+// do it this way so that its easy to see and manage the condition codes.
+// alu_h, alu_n, alu_z, alu_v, alu_c 
+wire [12:0] alu_out_clr = { cc_q[CC_H], alu_n, alu_z,  1'b0,       1'b0,                    8'h00 };
+wire [12:0] alu_out_inc = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_sum[8],             alu_sum[7:0] };
+wire [12:0] alu_out_asl = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[7],       alu_in0[6:0], 1'b0 };
+wire [12:0] alu_out_asr = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[0], alu_in0[7], alu_in0[7:1] };
+wire [12:0] alu_out_lsr = { cc_q[CC_H], alu_n, alu_z, alu_v, alu_in0[0],       1'b0, alu_in0[7:1] };
+wire [12:0] alu_out_com = { cc_q[CC_H], alu_n, alu_z,  1'b0,       1'b1,            ~alu_in0[7:0] };
+
+// ----------------------------------
+// Select the appropriate ALU Result
+// ----------------------------------
 // Perform CLR by XOR with self.
-wire [8:0] alu_out = {
-  alu_op_clr   ?   alu_in0 ^ alu_in1   :
-  alu_op_inc   ? ( alu_in0 + alu_in1 ) :
-  alu_op_asl   ?  { alu_in0, 1'b0 }    :
-  alu_op_asr   ?  { alu_in0[0], alu_in0[7], alu_in0[7:1] } : // LSB -> Carry 
-  9'h00  
+wire [12:0] alu_out = {
+  alu_op_clr   ? alu_out_clr :
+  alu_op_inc   ? alu_out_inc :
+  alu_op_asl   ? alu_out_asl :
+  alu_op_asr   ? alu_out_asr :  
+  13'h00  
   };
 
-// Half Carry is only defined for ADD and ADC 
-wire [4:0] alu_halfcarrysum = alu_in0[3:0] + alu_in1[3:0];
-wire       alu_halfcarry    = alu_halfcarrysum[4]; 
+assign cc_q_next[3:0] = alu_out[11:8];
+// The half Carry is bit 5. 
+assign cc_q_next[CC_H] = alu_out[12];
 
 // Condition code register bits.
 assign cc_q_next[CC_E] = cc_q[CC_E];   
@@ -618,11 +655,11 @@ assign cc_q_next[CC_I] = cc_q[CC_I];
 
 // ALU-Controlled bits.
 // Overflow appears to be when bit 8 differs from bit 7
-assign cc_q_next[CC_H] =                                     cc_q[CC_H] ;
-assign cc_q_next[CC_N] = alu_op    ?    alu_out[7]            : cc_q[CC_N] ;
-assign cc_q_next[CC_Z] = alu_op    ? ~( |alu_out)             : cc_q[CC_Z] ;
-assign cc_q_next[CC_V] = alu_op_ov ?  alu_out[8] ^ alu_out[7] : cc_q[CC_V] ;
-assign cc_q_next[CC_C] = alu_op    ?  alu_out[8]              : cc_q[CC_C] ;
+//assign cc_q_next[CC_H] =                                     cc_q[CC_H] ;
+//assign cc_q_next[CC_N] = alu_op    ?    alu_out[7]            : cc_q[CC_N] ;
+//assign cc_q_next[CC_Z] = alu_op    ? ~( |alu_out)             : cc_q[CC_Z] ;
+//assign cc_q_next[CC_V] = alu_op_ov ?  alu_out[8] ^ alu_out[7] : cc_q[CC_V] ;
+//assign cc_q_next[CC_C] = alu_op    ?  alu_out[8]              : cc_q[CC_C] ;
 
 // Update the registers.   Tie this into the reset signal.  
 always @(posedge clk or negedge reset_b ) begin 
@@ -665,7 +702,7 @@ always @(posedge clk or negedge reset_b ) begin
 
 // ------------------------------------------------------------------------
 // Validation Assertions.
-// icarus verilog apprarently support "simple immediate assertions"
+// icarus verilog apparently support "simple immediate assertions"
 // ------------------------------------------------------------------------
 
 // Do some sanity checks on every clock 
@@ -678,7 +715,8 @@ always @(posedge clk) begin
 
   // Only a single one-hot alu operation should be active at once.
   assert( (
-    alu_op_inc + alu_op_clr + alu_op_asl + alu_op_asr 
+    alu_op_asl + alu_op_asr + alu_op_clr + alu_op_inc +
+    alu_op_lsr +  alu_op_com
     ) <= 1 );
 
   // Only one destination register at a time 
