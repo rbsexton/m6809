@@ -523,8 +523,8 @@ wire [7:0] ir_q_next = (
 // Run all of the critical system flops through async reset.
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
-    ir_q <= 8'h0;
-    pb_q <= 8'b0;
+    ir_q <=  8'h0;
+    pb_q <=  8'b0;
     pc_q <= 16'b0;
     end 
   else begin 
@@ -539,11 +539,24 @@ always @(posedge clk or negedge reset_b ) begin
 // Assemble 16-bit things into a single register for 16-bit fetches.
 // reg [15:0] mem_capture;
 
-// ----------------------------------------
+// ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 // Arithmetic Logic Unit and Condition Codes
-// Run everything though an ALU so that its 
+// Its Run everything though an ALU so that its 
 // easier to capture condition codes. 
-// ----------------------------------------
+// ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
+
+// ----------------------------------------------
+// ALU Inputs:
+// Port A, Port B, Carry In
+// ALU Outputs:
+// Condition Codes, Output Port
+// ----------------------------------------------
+
+// ----------------------------------------------
+// ALU Control Signals.
+// ----------------------------------------------
 
 // On-hots for ALU Operations
 // Start with opcode detection. 
