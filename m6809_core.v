@@ -13,9 +13,10 @@ module core6809 (
   input              halt_b,    // Terminate after the current instruction.
   
   output reg  [15:0] addr,      // External Memory address
+  output reg         data_rw_n, // Memory Write  
+
   input        [7:0] data_in,   // External Memory data in
-  output wire  [7:0] data_out,  // External Memory data out     
-  output wire        data_rw_n  // Memory Write  
+  output wire  [7:0] data_out   // External Memory data out     
   
   );
 
@@ -478,28 +479,37 @@ always @(posedge clk or negedge reset_b ) begin
 // instruction register     
 // ------------------------------------------------------------
 
+wire [15:0] addr_next;
+wire        data_rw_n_next;
+
 // When in reset, force this to FFFE  
 always @(posedge clk or negedge reset_b ) begin 
-  if ( ~reset_b ) begin 
-    addr <= 16'hfffe;
+  if ( ~reset_b ) begin
+    addr      <= 16'hfffe;
+    data_rw_n <= 1'b1;
     end 
   else begin 
-    addr <= addr_next;
+    addr      <= addr_next;
+    data_rw_n <= data_rw_n_next;
     end 
   end
-   
-
-wire [15:0] addr_next; 
 
 // Address Generation logic product of sums notation.
 // The Program counter state machine is closely coupled 
 // to the address generation state machine.
-assign addr_next = (
-  ( {16{ do_reset     }} & 16'hfffe ) |
-  ( {16{do_fetchr_msb }} & 16'hffff ) |
-  ( {16{do_fetchr_lsb }} & pc_q     ) |
-  ( {16{do_fetch_ir   }} & pc_q + 1 ) 
+// MSB is used for the RW control.
+
+wire [15:0] pc_q_1 = pc_q + 1;
+
+wire [16:0] memctl_next = (
+  ( {17{ do_reset     }} & { 1'b1, 16'hfffe }) |
+  ( {17{do_fetchr_msb }} & { 1'b1, 16'hffff }) |
+  ( {17{do_fetchr_lsb }} & { 1'b1,     pc_q }) |
+  ( {17{do_fetch_ir   }} & { 1'b1,   pc_q_1 } ) 
 );
+
+assign data_rw_n_next = memctl_next[16];
+assign addr_next      = memctl_next[15:0];
 
 // Program Counter Control.
 // This needs to point to the next thing to fetch.
