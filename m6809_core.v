@@ -143,7 +143,7 @@ wire inst_asr_dir               = ir_q == 8'h07;
 wire inst_asr_idx               = ir_q == 8'h67;
 wire inst_asr_ext               = ir_q == 8'h77;
 
-// Short Branches 
+// Simple Branches 
 wire inst_bra                   = ir_q == 8'h20; 
 wire inst_brn                   = ir_q == 8'h21;  
 wire inst_lbrn                  = ir_q == 8'h10 & pb_q == 8'h21;
@@ -151,26 +151,16 @@ wire inst_lbrn                  = ir_q == 8'h10 & pb_q == 8'h21;
 wire inst_bsr                   = ir_q == 8'h8d;
 wire inst_lbsr                  = ir_q == 8'h17;
 
+
+
 wire inst_bmi                   = ir_q == 8'h2b;
 wire inst_bpl                   = ir_q == 8'h2a;
 wire inst_beq                   = ir_q == 8'h27;
 wire inst_bne                   = ir_q == 8'h26;
 wire inst_bvs                   = ir_q == 8'h29;
 wire inst_bvc                   = ir_q == 8'h28;
-wire inst_bcs                   = ir_q == 8'h25;
-wire inst_bcc                   = ir_q == 8'h24;
-
-
-
-// wire inst_bge                   = ir_q == 8'h2c;
-// wire inst_bgt                   = ir_q == 8'h2e;
-// wire inst_bhi                   = ir_q == 8'h22;
-// wire inst_bhs                   = ir_q == 8'h24; // same as bcc 
-// wire inst_ble                   = ir_q == 8'h2f; 
-// wire inst_blo                   = ir_q == 8'h25; // same as bcs
-// wire inst_bls                   = ir_q == 8'h24; //  
-// wire inst_blt                   = ir_q == 8'h24;
-
+wire inst_bcs                   = ir_q == 8'h25; // Done 
+wire inst_bcc                   = ir_q == 8'h24; // Done
 
 // Bit tests 
 wire inst_bita_imm              = ir_q == 8'h85;
@@ -294,7 +284,7 @@ wire inst_ldb_dir               = ir_q == 8'hd6;
 wire inst_ldb_idx               = ir_q == 8'he6;
 wire inst_ldb_ext               = ir_q == 8'hf6;
 
-wire inst_ldd_imm               = ir_q == 8'hcc;
+wire inst_ldd_imm               = ir_q == 8'hcc & fetch_b2; 
 wire inst_ldd_dir               = ir_q == 8'hdc;
 wire inst_ldd_idx               = ir_q == 8'hec;
 wire inst_ldd_ext               = ir_q == 8'hfc;
@@ -480,8 +470,8 @@ wire inst_tst_ext               = ir_q == 8'h7d;
 // ------------------------------------------------------------
 
 wire inst_amode_inh  = ir_q[7:4] == 4'h1 | ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
-wire inst_amode_imm  = ir_q[7:4] == 4'h2 | ir_q[7:4] == 4'h8; // 2 Byte  
-wire inst_amode_imm2 = ir_q[7:4] == 4'hc                    ; // 3 Byte Immediate  
+wire inst_amode_imm  = ir_q[7:4] == 4'h2 | ir_q[7:4] == 4'h8 | ir_q[7:3] == 5'b1100_0 ; // 2 Byte  
+wire inst_amode_imm2 = ir_q[7:3] == 5'b1100_1;                 // 3 Byte Immediate  
 wire inst_amode_dir  = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
 wire inst_amode_idx  = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
 wire inst_amode_ext  = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
@@ -520,17 +510,15 @@ wire alu_op_ror    = ir_q[3:0] == 4'h6 &  inst_amode_inh;
 wire alu_op_asr    = ir_q[3:0] == 4'h7;
 wire alu_op_asl    = ir_q[3:0] == 4'h8;
 wire alu_op_rol    = ir_q[3:0] == 4'h9;
-wire alu_op_inc    = ir_q[3:0] == 4'hc;
+wire alu_op_inc    = ir_q[3:0] == 4'hc & inst_amode_inh ;
+wire alu_op_ldd    = ir_q[3:0] == 4'hc & inst_amode_imm2; 
+ 
 wire alu_op_clr    = ir_q[3:0] == 4'hf;
 
-// a signal that triggers condition code updates.
-// The overflow bit is a little odd.  Not all instructions support it.
-wire alu_op     = alu_op_clr | alu_op_com | alu_op_inc | alu_op_asl | alu_op_asr | alu_op_lsr;
-wire alu_op_ov  = alu_op_clr | alu_op_inc ;
-
 // Input Register selection
-wire alu_src_a    = ir_q[7:4] == 4'h4; // CLR, INC
-wire alu_src_pb   = ir_q[7:4] == 4'h8; // lda 
+wire alu_src_a    = ir_q[7:4] == 4'h4;                     // CLR, INC
+wire alu_src_pb   = ir_q[7:4] == 4'h8 | ir_q[7:4] == 4'hc; // lda,b 
+wire alu_src_pb16 = ir_q[7:4] == 4'hc;                     // ldd 
 
 wire alu_src_b     = ir_q[7:4] == 4'h5; // CLR, INC
 
@@ -551,6 +539,13 @@ wire [7:0] alu_in1 = {
   alu_op_inc ?   8'h01 :
   8'h00 
   };
+
+wire [15:0] alu16_in0 = {
+  alu_src_pb16 ? { pb_q, fetch2_q }  :
+  16'h0 
+  };
+
+wire [15:0] alu16_in1 = 16'b0;
 
 // ----------------------------------------------
 // ALU Condition Code management.
@@ -579,6 +574,14 @@ wire        alu_z   = ~( |alu_out[7:0]);
 wire        alu_v   = alu_out[8] ^ cc_q[CC_C];
 wire        alu_c   = alu_sum[8];
 
+wire [15:0] alu16_out;
+
+wire [16:0] alu16_sum   = alu16_in0 + alu16_in1 + cc_q[CC_C];
+wire        alu16_n   = alu16_out[15];
+wire        alu16_z   = ~( |alu16_out[15:0]);
+wire        alu16_v   = alu16_out[16] ^ cc_q[CC_C];
+wire        alu16_c   = alu16_sum[16];
+
 // ----------------------------------------------
 // ALU Operators
 // ----------------------------------------------
@@ -602,10 +605,12 @@ wire [4:0] alu_out_asl_cc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7] }
 wire [4:0] alu_out_rol_cc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7] };
 wire [4:0] alu_out_asr_cc = { cc_q[CC_H], alu_n, alu_z,     alu_v, alu_in0[0] };
 wire [4:0] alu_out_lsr_cc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[0] };
+wire [4:0] alu_out_ror_cc = { cc_q[CC_H], alu_n, alu_z, cc_q[CC_H], alu_in0[0] };
+wire [4:0] alu_out_com_cc = { cc_q[CC_H], alu_n, alu_z,       1'b0,       1'b1 };
+wire [4:0] alu_out_ld_cc  = { cc_q[CC_H], alu_n, alu_z,       1'b0, cc_q[CC_H] };
 
-wire [12:0] alu_out_ror_cc = { cc_q[CC_H], alu_n, alu_z, cc_q[CC_H], alu_in0[0] };
-wire [12:0] alu_out_com_cc = { cc_q[CC_H], alu_n, alu_z,       1'b0,       1'b1 };
-wire [12:0] alu_out_ld_cc  = { cc_q[CC_H], alu_n, alu_z,       1'b0, cc_q[CC_H] };
+wire [15:0] alu16_out_ldd    = { alu16_in0[15:0] };
+wire  [4:0] alu16_out_ldd_cc = { cc_q[CC_H], alu16_n, alu16_z,  1'b0, cc_q[CC_H] };
 
 // ----------------------------------
 // Select the appropriate ALU Result
@@ -629,11 +634,17 @@ assign alu_out_cc = {
   alu_op_rol   ? alu_out_rol_cc :
   alu_op_asr   ? alu_out_asr_cc :  
   alu_op_ror   ? alu_out_ror_cc :  
-  alu_op_ld    ? alu_out_ld_cc  :  
+  alu_op_ld    ? alu_out_ld_cc  :
+  alu_op_ldd   ? alu16_out_ldd_cc :  
   { cc_q[CC_H], cc_q[3:0] } 
   };
 
-assign cc_q_next[3:0] = alu_out_cc;
+assign alu16_out = {
+  alu_op_ldd   ? alu16_out_ldd :
+  16'h00 
+  };
+
+assign cc_q_next[3:0] = alu_out_cc[3:0];
 // The half Carry is bit 5. 
 assign cc_q_next[CC_H] = alu_out_cc[4];
 
@@ -660,13 +671,15 @@ always @(posedge clk or negedge reset_b ) begin
 wire [7:0] a_q_nxt = {
   alu_dest_a   ? alu_out[7:0] :
   inst_lda_imm ? alu_out[7:0] :
+  inst_ldd_imm ? alu16_out[15:8] :
   a_q 
   };
     
 // ----------- Register B ------------
 wire [7:0] b_q_nxt = {
-  alu_dest_b   ? alu_out[7:0] :
-  inst_ldb_imm ? alu_out[7:0] :
+  alu_dest_b   ?   alu_out[7:0] :
+  inst_ldb_imm ?   alu_out[7:0] :
+  inst_ldd_imm ? alu16_out[7:0] :
   b_q 
   };
 
@@ -730,7 +743,7 @@ reg   [3:0] lsu_state;
 wire  [3:0] lsu_state_next;
 
 reg   [7:0] lsu_msb;      // We need to stage this
-reg   [7:0] lsu_msb_next; 
+wire  [7:0] lsu_msb_next; 
 
 wire [15:0] lsu_out; // This gets grabbed by the register.
 
@@ -757,7 +770,6 @@ assign lsu_state_next =
 assign addr_d_next = 
   ( {16{ lsu_ld_msb}} & addr_d_plus1 )
   ;
-
 
 assign lsu_out = { lsu_msb, data_in }; // Port memory data straight into register
 
@@ -799,29 +811,48 @@ always @(posedge clk or negedge reset_b ) begin
 wire [4:0] fetch_state_next = (
   ( {5{fetch_wait      & ~lsu_idle       }} & st_fetch_wait )   | 
   ( {5{fetch_wait      &  lsu_idle       }} & st_fetch_ir )     | 
-  ( {5{fetch_ir        & inst_amode_inh  }} & st_fetch_ir )     |
+
+  ( {5{fetch_ir        & inst_amode_inh  }} & st_fetch_ir )     |  
   ( {5{fetch_ir        & inst_amode_imm  }} & st_fetch_pb_imm ) |  
-  ( {5{fetch_pb_imm    & inst_amode_imm  }} & st_fetch_ir     )  
+  ( {5{fetch_ir        & inst_amode_imm2 }} & st_fetch_pb_imm ) |
+    
+  ( {5{fetch_pb_imm    & inst_amode_imm  }} & st_fetch_ir     ) |
+  ( {5{fetch_pb_imm    & inst_amode_imm2 }} & st_fetch_b2     ) |
+
+  ( {5{fetch_b2                          }} & st_fetch_ir     )  
   );
 
 // Instruction Register and post-byte.
-wire [7:0] ir_q_next = {
-  fetch_wait    & lsu_idle       ? data_in :
-  fetch_ir      & inst_amode_inh ? data_in :
-  fetch_pb_imm  & inst_amode_imm ? data_in :
-  ir_q
-  };
+wire data_in_en = 
+  (fetch_wait    & lsu_idle       ) |
+  (fetch_ir      & inst_amode_inh ) |
+  (fetch_pb_imm  & inst_amode_imm ) |
+  (fetch_b2      & inst_amode_imm2 )
+  ;
+wire [7:0] ir_q_next = data_in_en ? data_in : ir_q;
    
-wire [7:0] pb_q_next = (fetch_ir & inst_amode_imm) ? data_in : pb_q;
+wire [7:0] pb_q_next = {
+  (fetch_ir & inst_amode_imm ) ? data_in :
+  (fetch_ir & inst_amode_imm2) ? data_in :
+  pb_q 
+  }; 
+
+wire [7:0] fetch2_q_next = {
+  (fetch_pb_imm & inst_amode_imm2 ) ? data_in :
+  fetch2_q 
+  };
 
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
-    ir_q <=  8'h0;
-    pb_q <=  8'b0;
+    ir_q     <=  8'h0;
+    pb_q     <=  8'b0;
+    fetch2_q <= 8'b0; 
+    // fetch3_q <= 8'b0;     
     end 
   else begin 
-    ir_q <= ir_q_next;
-    pb_q <= pb_q_next;
+    ir_q     <= ir_q_next;
+    pb_q     <= pb_q_next;
+    fetch2_q <= fetch2_q_next;
     end 
   end
 
@@ -854,13 +885,12 @@ wire do_branch =
     ( ir_q[3:0] == 4'h4 & ~cc_q[CC_C] )   // BCC
   ); 
 
-wire [15:0] pc_q_next = 
-  ( {16{reset_load                }} & lsu_out     ) |
-  ( {16{fetch_wait &  lsu_idle    }} & pc_q_1      ) | 
-  ( {16{fetch_ir                  }} & pc_q_1      ) |
-  ( {16{fetch_pb_imm & ~do_branch }} & pc_q_1      ) |
-  ( {16{fetch_pb_imm &  do_branch }} & pc_q_branch )
-  ;
+// Increment is the norm.
+wire [15:0] pc_q_next = {
+  reset_load ? lsu_out :
+  ( fetch_pb_imm &  do_branch ) ? pc_q_branch :
+  pc_q_1 
+  };
 
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
