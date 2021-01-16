@@ -566,7 +566,8 @@ wire [7:0] cc_q_next;
 // Half Carry is only defined for ADD and ADC 
 
 // 5 bit of status, then the actual result.
-wire [12:0] alu_out;
+wire [7:0] alu_out;
+wire [4:0] alu_out_cc;
 
 wire [8:0] alu_sum   = alu_in0      + alu_in1      + cc_q[CC_C];
 wire [4:0] alu_hsum  = alu_in0[3:0] + alu_in1[3:0] + cc_q[CC_C];
@@ -585,18 +586,26 @@ wire        alu_c   = alu_sum[8];
 // Make separate vectors for all of the ALU operators.
 // do it this way so that its easy to see and manage the condition codes.
 // alu_h, alu_n, alu_z, alu_v, alu_c 
-wire [12:0] alu_out_clr = { cc_q[CC_H], alu_n, alu_z,      1'b0,       1'b0,                    8'h00 };
-wire [12:0] alu_out_inc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_sum[8],             alu_sum[7:0] };
+wire [7:0] alu_out_clr    = { 8'h00 };
+wire [7:0] alu_out_inc    = { alu_sum[7:0] };
+wire [7:0] alu_out_asl    = { alu_in0[6:0], 1'b0 };
+wire [7:0] alu_out_rol    = { alu_in0[6:0], cc_q[CC_C] };
+wire [7:0] alu_out_asr    = { alu_in0[7], alu_in0[7:1] };
+wire [7:0] alu_out_lsr    = { 1'b0, alu_in0[7:1] };
+wire [7:0] alu_out_ror    = { cc_q[CC_C], alu_in0[7:1] };
+wire [7:0] alu_out_com    = { ~alu_in0[7:0] };
+wire [7:0] alu_out_ld     = { alu_in0[7:0] };
 
-wire [12:0] alu_out_asl = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7],       alu_in0[6:0], 1'b0 };
-wire [12:0] alu_out_rol = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7], alu_in0[6:0], cc_q[CC_C] };
+wire [4:0] alu_out_clr_cc = { cc_q[CC_H], alu_n, alu_z,      1'b0,       1'b0 };
+wire [4:0] alu_out_inc_cc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_sum[8] };
+wire [4:0] alu_out_asl_cc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7] };
+wire [4:0] alu_out_rol_cc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[7] };
+wire [4:0] alu_out_asr_cc = { cc_q[CC_H], alu_n, alu_z,     alu_v, alu_in0[0] };
+wire [4:0] alu_out_lsr_cc = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[0] };
 
-wire [12:0] alu_out_asr = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[0], alu_in0[7], alu_in0[7:1] };
-wire [12:0] alu_out_lsr = { cc_q[CC_H], alu_n, alu_z,      alu_v, alu_in0[0],       1'b0, alu_in0[7:1] };
-wire [12:0] alu_out_ror = { cc_q[CC_H], alu_n, alu_z, cc_q[CC_H], alu_in0[0], cc_q[CC_C], alu_in0[7:1] };
-
-wire [12:0] alu_out_com = { cc_q[CC_H], alu_n, alu_z,       1'b0,       1'b1,            ~alu_in0[7:0] };
-wire [12:0] alu_out_ld  = { cc_q[CC_H], alu_n, alu_z,       1'b0, cc_q[CC_H],             alu_in0[7:0] };
+wire [12:0] alu_out_ror_cc = { cc_q[CC_H], alu_n, alu_z, cc_q[CC_H], alu_in0[0] };
+wire [12:0] alu_out_com_cc = { cc_q[CC_H], alu_n, alu_z,       1'b0,       1'b1 };
+wire [12:0] alu_out_ld_cc  = { cc_q[CC_H], alu_n, alu_z,       1'b0, cc_q[CC_H] };
 
 // ----------------------------------
 // Select the appropriate ALU Result
@@ -610,12 +619,23 @@ assign alu_out = {
   alu_op_asr   ? alu_out_asr :  
   alu_op_ror   ? alu_out_ror :  
   alu_op_ld    ? alu_out_ld  :  
-  { cc_q[CC_H] , cc_q[3:0], 8'h00 } 
+  8'h00 
   };
 
-assign cc_q_next[3:0] = alu_out[11:8];
+assign alu_out_cc = {
+  alu_op_clr   ? alu_out_clr_cc :
+  alu_op_inc   ? alu_out_inc_cc :
+  alu_op_asl   ? alu_out_asl_cc :
+  alu_op_rol   ? alu_out_rol_cc :
+  alu_op_asr   ? alu_out_asr_cc :  
+  alu_op_ror   ? alu_out_ror_cc :  
+  alu_op_ld    ? alu_out_ld_cc  :  
+  { cc_q[CC_H], cc_q[3:0] } 
+  };
+
+assign cc_q_next[3:0] = alu_out_cc;
 // The half Carry is bit 5. 
-assign cc_q_next[CC_H] = alu_out[12];
+assign cc_q_next[CC_H] = alu_out_cc[4];
 
 // Condition code register bits.
 assign cc_q_next[CC_E] = cc_q[CC_E];   
