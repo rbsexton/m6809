@@ -52,8 +52,10 @@ localparam CC_Z = 4'd2; // Zero
 localparam CC_V = 4'd1; // Overflow 
 localparam CC_C = 4'd0; // Carry 
 
-reg [7:0] ir_q; // Instruction Register.
-reg [7:0] pb_q; // Post-Byte for 16-bit instructions.
+reg [7:0] ir_q;     // Fetch 0 Instruction Register.
+reg [7:0] pb_q;     // Fetch 1 Post-Byte for 16-bit instructions.
+reg [7:0] fetch2_q; // Fetch 2 .
+reg [7:0] fetch3_q; // Fetch 3 .
 
 
 // --------------------------------------------
@@ -62,7 +64,7 @@ reg [7:0] pb_q; // Post-Byte for 16-bit instructions.
 reg  [4:0] fetch_state;
 
 localparam st_fetch_wait   = 5'b0_0001; // Data Wait 
-localparam st_fetch_ir     = 5'b0_0010; // Byte 0: IR Fetch 
+localparam st_fetch_ir     = 5'b0_0010; // Byte 0: IR Fetch                            
 localparam st_fetch_pb_imm = 5'b0_0100; // Byte 1: Post Byte / Immediate Fetch   
 localparam st_fetch_b2     = 5'b0_1000; // Byte 2   
 localparam st_fetch_b3     = 5'b1_0000; // Byte 3   
@@ -477,17 +479,22 @@ wire inst_tst_ext               = ir_q == 8'h7d;
 // Instruction set metadata 
 // ------------------------------------------------------------
 
-wire inst_amode_inh = ir_q[7:4] == 4'h1 | ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
-wire inst_amode_imm = ir_q[7:4] == 4'h2 | ir_q[7:4] == 4'h8 | ir_q[7:4] == 4'hc; // 2 Byte  
-wire inst_amode_dir = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
-wire inst_amode_idx = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
-wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
+wire inst_amode_inh  = ir_q[7:4] == 4'h1 | ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
+wire inst_amode_imm  = ir_q[7:4] == 4'h2 | ir_q[7:4] == 4'h8; // 2 Byte  
+wire inst_amode_imm2 = ir_q[7:4] == 4'hc                    ; // 3 Byte Immediate  
+wire inst_amode_dir  = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
+wire inst_amode_idx  = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
+wire inst_amode_ext  = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
 
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
 // Arithmetic Logic Unit and Condition Codes
 // Its Run everything though an ALU so that its 
 // easier to capture condition codes. 
+// 
+// Two ALUs - 8 and 16
+// Double length Instructions
+// addd cmp ldd/s/u/x/y leas/u/x/y std subd  
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
 
