@@ -65,11 +65,11 @@ wire [8:0] alu_out_sub =         alu_in_a + alu_in_b_inv + 1;
 wire [8:0] alu_out_sbc =  alu_in_a + alu_in_b_inv + 1 - c_in;
 
 wire [8:0] alu_out_com = { 1'b0,               alu_in_a_inv };
-wire [8:0] alu_out_lsr = { 1'b0,        1'b0, alu_in_a[7:1] };
+wire [8:0] alu_out_lsr = { alu_in_a[0], 1'b0, alu_in_a[7:1] };
 wire [8:0] alu_out_and = { c_in,        alu_in_a & alu_in_b };
 
 wire [8:0] alu_out_ror = { alu_in_a[0], c_in, alu_in_a[7:1] };
-wire [8:0] alu_out_asr = { 1'b0,  alu_in_a[7],alu_in_a[7:1] };
+wire [8:0] alu_out_asr = { alu_in_a[0], alu_in_a[7],alu_in_a[7:1] };
 
 wire [8:0] alu_out_eor = { c_in,        alu_in_a ^ alu_in_b };
 wire [8:0] alu_out_asl = {                   alu_in_a, 1'b0 };
@@ -82,7 +82,7 @@ wire [8:0] alu_out_inc =                         alu_in_a + 1;
 
 wire [8:0] alu_out_sex = {                 {9{alu_in_a[7]}} };
 wire [8:0] alu_out_ora = { c_in,        alu_in_a | alu_in_b };
-wire [8:0] alu_out_tst = { 1'b0,                   alu_in_a };
+wire [8:0] alu_out_tst = { c_in,                   alu_in_a };
 wire [8:0] alu_out_clr = { 1'b0,                      8'h00 };
 
 assign { c_out, alu_out } = 

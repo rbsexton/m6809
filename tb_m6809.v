@@ -31,11 +31,11 @@ module tb_6809;
 		// Initialize Inputs
     halt_b  = 1;
 		reset_b = 0;
-		// Wait 100 ns for global reset to finish
-		#100;
+		// Wait for global reset to finish
+		#25;
     reset_b = 1;
 
-    #2000;
+    #5000;
     
     $finish; 
     end

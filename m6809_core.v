@@ -118,7 +118,7 @@ wire inst_addd_idx              = ir_q == 8'he3;
 wire inst_addd_ext              = ir_q == 8'hf3;
 
 // And ( 8-Bit ) 
-wire inst_anda_imm              = ir_q == 8'h84 & fetch_pb_imm;
+wire inst_anda_imm              = ir_q == 8'h84 & fetch_ir;
 wire inst_anda_dir              = ir_q == 8'h94;
 wire inst_anda_idx              = ir_q == 8'ha4;
 wire inst_anda_ext              = ir_q == 8'hb4;
@@ -854,7 +854,7 @@ wire [15:0] pc_q_1     = pc_q + 1;
 
 // Short Branches
 wire        inst_sbranch = ir_q[7:4] == 4'h2; 
-wire [15:0] pc_q_sbranch = pc_q + { {8{din[7]}} , din};
+wire [15:0] pc_q_sbranch = pc_q_1 + { {8{din[7]}} , din};
 
 // Trigger the branch action.
 wire do_branch =
