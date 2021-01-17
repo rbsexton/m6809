@@ -62,7 +62,7 @@ core6809 ucore (
   .halt_b                (halt_b),
   
   .addr                  (address),
-  .data_in               (core_data_in),
+  .din                   (core_data_in),
   .data_out              (core_data_out),
   .data_rw_n             (data_rw_n)
   );

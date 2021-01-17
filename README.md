@@ -17,6 +17,9 @@ The original device uses two clocks.   This is a one clock synchronous design.
 The CPU consists of two interlocked state machines for memory load/store and 
 instruction fetch.  That was easier to understand than a single large state machine.
 
+The instruction execution logic is controlled by registered data.   The Fetch/Branch 
+code looks at the instructions as they traverse the data bus.
+
 The rest of the design is made up of combinatorial logic. 
 
 The instruction set looks somewhat random in the big list.  The patterns are 
