@@ -1013,5 +1013,24 @@ always @(posedge clk) begin
 
   end
 
+// -----------------------------------------
+// Formal Verification   
+// -----------------------------------------
+`ifdef FORMAL
+
+initial begin
+  assume(reset_b == 0);
+  assume(clk  == 0);
+  end 
+
+// always @(*) begin 
+//
+//  end 
+`endif
+
+
+
+
+
 
 endmodule
