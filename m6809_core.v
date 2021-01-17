@@ -861,14 +861,14 @@ wire [15:0] pc_q_sbranch = pc_q_1 + { {8{din[7]}} , din};
 wire do_branch =
   inst_sbranch & fetch_pb_imm & (
     ( ir_q[3:0] == 4'h0               ) | // BRA
-    ( ir_q[3:0] == 4'hB &  cc_q[CC_N] ) | // BMI
-    ( ir_q[3:0] == 4'hA & ~cc_q[CC_N] ) | // BPL
-    ( ir_q[3:0] == 4'h7 &  cc_q[CC_Z] ) | // BEQ
+    ( ir_q[3:0] == 4'h4 & ~cc_q[CC_C] ) | // BCC / BHS
+    ( ir_q[3:0] == 4'h5 &  cc_q[CC_C] ) | // BCS / BLO
     ( ir_q[3:0] == 4'h6 & ~cc_q[CC_Z] ) | // BNE
-    ( ir_q[3:0] == 4'h9 &  cc_q[CC_V] ) | // BVS
+    ( ir_q[3:0] == 4'h7 &  cc_q[CC_Z] ) | // BEQ 
     ( ir_q[3:0] == 4'h8 & ~cc_q[CC_V] ) | // BVC
-    ( ir_q[3:0] == 4'h5 &  cc_q[CC_C] ) | // BCS
-    ( ir_q[3:0] == 4'h4 & ~cc_q[CC_C] )   // BCC
+    ( ir_q[3:0] == 4'h9 &  cc_q[CC_V] ) | // BVS
+    ( ir_q[3:0] == 4'hA & ~cc_q[CC_N] ) | // BPL
+    ( ir_q[3:0] == 4'hB &  cc_q[CC_N] )   // BMI
   ); 
 
 // Increment is the norm.
