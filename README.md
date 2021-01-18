@@ -30,11 +30,20 @@ condition codes register.
 
 # Simulation 
 
-Basic simulation with Icarus Verilog.  
+## Simulation with Icarus Verilog.  
 
 ```iverilog -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
 
 ```iverilog -gsupported-assertions -g2012  -o tb_m6809 -s tb_6809   m6809_core.v mem-ram.v mem-rom.v m6809_integration.v tb_m6809.v  && vvp tb_m6809```
+
+## Formal Verification with yosys
+
+There is a yosys control file for verification, m6809_core.sby 
+
+Failure reproduction
+
+```iverilog -gsupported-assertions -g2012  -o trace_tb -s testbench trace_tb.v  m6809_core.v m6809_core_alu8.v```
+
 
 # Resources of note
 
@@ -45,6 +54,119 @@ Pointers to compilers, assemblers, etc: http://www.brouhaha.com/~eric/embedded/6
 Original datasheet (via Wikipedia page) here: https://archive.org/details/bitsavers_motorolada_3224333/page/n7/mode/2up 
 
 The data sheet contains a useful section called the 'Programmers Aid' that 
-has a very useful table of instruction.
+has a very useful table of instructions.
 
 HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet.fi/mc6809/Information/6809.htm
+
+# Instruction Support 
+
+## Supported
+- asla aslb
+- asra asrb
+- clra clrb
+- bra brn
+- beq bne bvs bvc bcs bcc bmi bpl 
+- coma comb
+- eora_imm 
+- eorb_imm 
+- inca incb
+- lsra lsrb
+- ora_imm
+- orb_imm
+- rola rolb
+- rora rorb
+
+
+## Unsupported   
+
+- adca_imm adca_dir adca_idx adca_ext
+- adcb_imm adcb_dir adcb_idx adcb_ext
+- adda_imm adda_dir adda_idx adda_ext
+- addb_imm addb_dir addb_idx addb_ext
+- addd_imm addd_dir addd_idx addd_ext
+- anda_imm anda_dir anda_idx anda_ext
+- andb_imm andb_dir andb_idx andb_ext
+- andcc_imm
+- asl_dir asl_idx asl_ext
+- asr_dir asr_idx asr_ext
+- lbrn
+- bsr lbsr beq bne, and signed branches  
+- bita_imm bita_dir bita_idx bita_ext
+- bitb_imm bitb_dir bitb_idx bitb_ext
+- clr_dir clr_idx clr_ext
+- cmpa_imm cmpa_dir cmpa_idx cmpa_ext
+- cmpb_imm cmpb_dir cmpb_idx cmpb_ext
+- cmpd cmpd_imm cmpd_dir cmpd_idx cmpd_ext
+- cmpy cmpy_imm cmpy_dir cmpy_idx cmpy_ext
+- cmps cmps_imm cmps_dir cmps_idx cmps_ext
+- cmpu cmpu_imm cmpu_dir cmpu_idx cmpu_ext
+- cmpx_imm cmpx_dir cmpx_idx cmpx_ext
+- com_dir com_idx com_ext
+- cwai
+- daa
+- deca decb
+- dec_dir dec_idx dec_ext
+- eora_dir eora_idx eora_ext
+- eorb_dir eorb_idx eorb_ext
+- inc_dir inc_idx inc_ext
+- jmp_dir jmp_idx jmp_ext
+- jsr_dir jsr_idx jsr_ext
+- lda_imm lda_dir lda_idx lda_ext
+- ldb_imm ldb_dir ldb_idx ldb_ext
+- ldd_imm ldd_dir ldd_idx ldd_ext
+- lds lds_imm lds_dir lds_idx lds_ext
+- ldu_imm ldu_dir ldu_idx ldu_ext
+- ldx_imm ldx_dir ldx_idx ldx_ext
+- ldy ldy_imm ldy_dir ldy_idx ldy_ext
+- leas leau leax leay
+- lsr_dir lsr_idx lsr_ext
+- mul
+- nega negb
+- neg_dir neg_idx neg_ext
+- nop
+- ora_dir ora_idx ora_ext
+- orb_dir orb_idx orb_ext
+- orcc
+- pshs pshu
+- puls pulu
+- rol_dir rol_idx rol_ext
+- ror_dir ror_idx ror_ext
+- rti
+- rts
+- sbca_imm sbca_dir sbca_idx sbca_ext
+- sbcb_imm sbcb_dir sbcb_idx sbcb_ext
+- sex
+- sta_dir sta_idx sta_ext
+- stb_dir stb_idx stb_ext 
+- std_dir std_idx std_ext
+- sts sts_dir sts_idx sts_ext
+- stu_dir stu_idx stu_ext
+- stx_dir stx_idx stx_ext
+- sty sty_dir sty_idx sty_ext
+- suba_imm suba_dir suba_idx suba_ext
+- subb_imm subb_dir subb_idx subb_ext
+- subd_imm subd_dir subd_idx subd_ext
+- swi swi2 swi3
+- sync 
+- tfr_imm
+- tsta tstb
+- tst_dir tst_idx tst_ext
+ 
+# Future Development 
+
+- Support halt_b with clock gating.
+- DMA Req/Ack 
+- Wait States 
+- Wide data bus? 
+
+Much, much to do.
+- Support EXC/TFR to load the DP register
+- Support LD on all registers in immediate mode
+- Store direct 
+- Support LD on all registers in direct mode
+- Support LD on all registers in extended direct mode
+- Push/Pop
+
+
+
+
