@@ -637,9 +637,11 @@ always @(posedge clk or negedge reset_b ) begin
     end 
   end
 
-// ----------------------------------------
+// -------------------------------------------------------------
 // Register file operations 
-// ----------------------------------------
+// -------------------------------------------------------------
+
+// Support for the transfer opcode.
 
 // ----------- Register A ------------
 wire [7:0] a_q_nxt = {
@@ -655,6 +657,16 @@ wire [7:0] b_q_nxt = {
   inst_ldd_imm ? alu16_out[7:0] :
   b_q 
   };
+
+
+
+// ----------- Register X ------------
+// ----------- Register Y ------------
+// ----------- Register U ------------
+// ----------- Register S ------------
+// PC is managed by the fetcher.
+// ----------- Register DP -----------
+
 
 // Update the registers.   Tie this into the reset signal.  
 always @(posedge clk or negedge reset_b ) begin 
@@ -1012,6 +1024,25 @@ always @(posedge clk) begin
 
 
   end
+
+// -----------------------------------------
+// Formal Verification   
+// -----------------------------------------
+`ifdef FORMAL
+
+initial begin
+  assume(reset_b == 0);
+  assume(clk  == 0);
+  end 
+
+always @(posedge clk) begin 
+   assume(reset_b == 1);
+   end 
+`endif
+
+
+
+
 
 
 endmodule
