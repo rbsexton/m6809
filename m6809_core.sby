@@ -11,11 +11,12 @@ mode bmc
 smtbmc 
 
 [script]
-read -formal m6809_core_alu8.v  m6809_core.v 
+read -formal m6809_core_alu8.v m6809_core_alu16.v  m6809_core.v 
 prep -top    core6809
 
 [files]
 m6809_core.v
 m6809_core_alu8.v
+m6809_core_alu16.v
 
 

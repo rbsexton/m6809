@@ -28,7 +28,11 @@ clearer in the the programmers reference.
 Things work better if all data passes through the ALU because the ALU owns the 
 condition codes register. 
 
-# Simulation 
+# Simulation
+
+## Formal Validation with yosys. 
+
+No formal validation yet.   Yosys can spot logic errors that don't appear in simulation.. 
 
 ## Simulation with Icarus Verilog.  
 
@@ -70,6 +74,7 @@ HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet
 - eora_imm 
 - eorb_imm 
 - inca incb
+- ldd_imm ldu_imm ldx_imm
 - lsra lsrb
 - ora_imm
 - orb_imm
@@ -113,10 +118,10 @@ HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet
 - jsr_dir jsr_idx jsr_ext
 - lda_imm lda_dir lda_idx lda_ext
 - ldb_imm ldb_dir ldb_idx ldb_ext
-- ldd_imm ldd_dir ldd_idx ldd_ext
+- ldd_dir ldd_idx ldd_ext
 - lds lds_imm lds_dir lds_idx lds_ext
-- ldu_imm ldu_dir ldu_idx ldu_ext
-- ldx_imm ldx_dir ldx_idx ldx_ext
+- ldu_dir ldu_idx ldu_ext
+- ldx_dir ldx_idx ldx_ext
 - ldy ldy_imm ldy_dir ldy_idx ldy_ext
 - leas leau leax leay
 - lsr_dir lsr_idx lsr_ext

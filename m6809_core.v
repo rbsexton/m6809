@@ -27,20 +27,17 @@ module core6809 (
 // ------------------------------------------------------------
 // ------------------------------------------------------------
 
-reg  [15:0] x_q;
-reg  [15:0] y_q;
-reg  [15:0] usp_q;
-reg  [15:0] hsp_q;
-reg  [15:0] pc_q;   // Per data sheet, address of the NEXT instruction 
 reg  [ 7:0] a_q;
 reg  [ 7:0] b_q;
-
-wire [15:0] d_q;
-assign d_q = { a_q, b_q };
-
 reg  [ 7:0] dp_q;
+reg  [ 7:0] cc_q; 
 
-reg [7:0] cc_q; 
+wire [15:0] d_q = { a_q, b_q };
+reg  [15:0] x_q;
+reg  [15:0] y_q;
+reg  [15:0] u_q;
+reg  [15:0] s_q;
+reg  [15:0] pc_q;   // Per data sheet, address of the NEXT instruction 
 
 // Bit offsets for the condition code register 
 localparam CC_E = 4'd7; // Entire
@@ -85,8 +82,16 @@ wire fetch_b3              = fetch_state[4];
 // and argument fetches are complete.  
 //
 // The instruction fetch logic has its own decode.
+//
+// One thing thats a bit of a mess is that we have one and two byte 
+// instructions.   There aren't that many two byte instructions,
+// just enough to make the instruction fetcher more complicated.
+// The data sheet refers to these as page2 and page3 
+
 // ------------------------------------------------------------
 // ------------------------------------------------------------
+wire page2 = ir_q == 8'h10;
+wire page3 = ir_q == 8'h11;
 
 wire inst_abx                   = ir_q == 8'h3a;
 
@@ -149,7 +154,7 @@ wire inst_asr_ext               = ir_q == 8'h77;
 // Simple Branches 
 wire inst_bra                   = ir_q == 8'h20; 
 wire inst_brn                   = ir_q == 8'h21;  
-wire inst_lbrn                  = ir_q == 8'h10 & pb_q == 8'h21;
+wire inst_lbrn                  = page2 & pb_q == 8'h21;
 
 wire inst_bsr                   = ir_q == 8'h8d;
 wire inst_lbsr                  = ir_q == 8'h17;
@@ -194,29 +199,25 @@ wire inst_cmpb_idx              = ir_q == 8'he1;
 wire inst_cmpb_ext              = ir_q == 8'hf1;
 
 // Some of the compares take two bytes to decode.
-wire inst_cmpd                  = ir_q == 8'h10;
-wire inst_cmpd_imm              = pb_q == 8'h83;
-wire inst_cmpd_dir              = pb_q == 8'h93;
-wire inst_cmpd_idx              = pb_q == 8'ha3;
-wire inst_cmpd_ext              = pb_q == 8'hb3;
+wire inst_cmpd_imm              = page2 & pb_q == 8'h83;
+wire inst_cmpd_dir              = page2 & pb_q == 8'h93;
+wire inst_cmpd_idx              = page2 & pb_q == 8'ha3;
+wire inst_cmpd_ext              = page2 & pb_q == 8'hb3;
 
-wire inst_cmpy                  = ir_q == 8'h10;
-wire inst_cmpy_imm              = pb_q == 8'h8c;
-wire inst_cmpy_dir              = pb_q == 8'h9c;
-wire inst_cmpy_idx              = pb_q == 8'hac;
-wire inst_cmpy_ext              = pb_q == 8'hbc;
+wire inst_cmpy_imm              = page2 & pb_q == 8'h8c;
+wire inst_cmpy_dir              = page2 & pb_q == 8'h9c;
+wire inst_cmpy_idx              = page2 & pb_q == 8'hac;
+wire inst_cmpy_ext              = page2 & pb_q == 8'hbc;
 
-wire inst_cmps                  = ir_q == 8'h11;
-wire inst_cmps_imm              = pb_q == 8'h8c;
-wire inst_cmps_dir              = pb_q == 8'h9c;
-wire inst_cmps_idx              = pb_q == 8'hac;
-wire inst_cmps_ext              = pb_q == 8'hbc;
+wire inst_cmps_imm              = page3 & pb_q == 8'h8c;
+wire inst_cmps_dir              = page3 & pb_q == 8'h9c;
+wire inst_cmps_idx              = page3 & pb_q == 8'hac;
+wire inst_cmps_ext              = page3 & pb_q == 8'hbc;
 
-wire inst_cmpu                  = ir_q == 8'h11;
-wire inst_cmpu_imm              = pb_q == 8'h83;
-wire inst_cmpu_dir              = pb_q == 8'h93;
-wire inst_cmpu_idx              = pb_q == 8'ha3;
-wire inst_cmpu_ext              = pb_q == 8'hb3;
+wire inst_cmpu_imm              = page3 & pb_q == 8'h83;
+wire inst_cmpu_dir              = page3 & pb_q == 8'h93;
+wire inst_cmpu_idx              = page3 & pb_q == 8'ha3;
+wire inst_cmpu_ext              = page3 & pb_q == 8'hb3;
 
 wire inst_cmpx_imm              = ir_q == 8'h8c;
 wire inst_cmpx_dir              = ir_q == 8'h9c;
@@ -285,32 +286,30 @@ wire inst_ldb_dir               = ir_q == 8'hd6;
 wire inst_ldb_idx               = ir_q == 8'he6;
 wire inst_ldb_ext               = ir_q == 8'hf6;
 
-wire inst_ldd_imm               = ir_q == 8'hcc & fetch_b2; 
+wire inst_ldd_imm               = ir_q == 8'hcc & fetch_ir; 
 wire inst_ldd_dir               = ir_q == 8'hdc;
 wire inst_ldd_idx               = ir_q == 8'hec;
 wire inst_ldd_ext               = ir_q == 8'hfc;
 
-wire inst_lds                   = ir_q == 8'h10;
-wire inst_lds_imm               = pb_q == 8'hce;
-wire inst_lds_dir               = pb_q == 8'hde;
-wire inst_lds_idx               = pb_q == 8'hee;
-wire inst_lds_ext               = pb_q == 8'hfe;
+wire inst_lds_imm               = page2 & pb_q == 8'hce;
+wire inst_lds_dir               = page2 & pb_q == 8'hde;
+wire inst_lds_idx               = page2 & pb_q == 8'hee;
+wire inst_lds_ext               = page2 & pb_q == 8'hfe;
 
-wire inst_ldu_imm               = ir_q == 8'hce;
+wire inst_ldu_imm               = ir_q == 8'hce & fetch_ir;
 wire inst_ldu_dir               = ir_q == 8'hde;
 wire inst_ldu_idx               = ir_q == 8'hee;
 wire inst_ldu_ext               = ir_q == 8'hfe;
 
-wire inst_ldx_imm               = ir_q == 8'h8e;
+wire inst_ldx_imm               = ir_q == 8'h8e & fetch_ir;
 wire inst_ldx_dir               = ir_q == 8'h9e;
 wire inst_ldx_idx               = ir_q == 8'hae;
 wire inst_ldx_ext               = ir_q == 8'hbe;
 
-wire inst_ldy                   = ir_q == 8'h10;
-wire inst_ldy_imm               = pb_q == 8'h8e;
-wire inst_ldy_dir               = pb_q == 8'h9e;
-wire inst_ldy_idx               = pb_q == 8'hae;
-wire inst_ldy_ext               = pb_q == 8'hbe;
+wire inst_ldy_imm               = pb_q == page2 & 8'h8e;
+wire inst_ldy_dir               = pb_q == page2 & 8'h9e;
+wire inst_ldy_idx               = pb_q == page2 & 8'hae;
+wire inst_ldy_ext               = pb_q == page2 & 8'hbe;
 
 // Load Effective Address 
 wire inst_leas                  = ir_q == 8'h32;
@@ -413,10 +412,9 @@ wire inst_std_dir               = ir_q == 8'hdd;
 wire inst_std_idx               = ir_q == 8'hed;
 wire inst_std_ext               = ir_q == 8'hfd;
 
-wire inst_sts                   = ir_q == 8'h10;
-wire inst_sts_dir               = pb_q == 8'hdf;
-wire inst_sts_idx               = pb_q == 8'hef;
-wire inst_sts_ext               = pb_q == 8'hff;
+wire inst_sts_dir               = page2 & pb_q == 8'hdf;
+wire inst_sts_idx               = page2 & pb_q == 8'hef;
+wire inst_sts_ext               = page2 & pb_q == 8'hff;
 
 wire inst_stu_dir               = ir_q == 8'hdf;
 wire inst_stu_idx               = ir_q == 8'hef;
@@ -426,10 +424,9 @@ wire inst_stx_dir               = ir_q == 8'h9f;
 wire inst_stx_idx               = ir_q == 8'haf;
 wire inst_stx_ext               = ir_q == 8'hbf;
 
-wire inst_sty                   = ir_q == 8'h10;
-wire inst_sty_dir               = pb_q == 8'h9f;
-wire inst_sty_idx               = pb_q == 8'haf;
-wire inst_sty_ext               = pb_q == 8'hbf;
+wire inst_sty_dir               = page2 & pb_q == 8'h9f;
+wire inst_sty_idx               = page2 & pb_q == 8'haf;
+wire inst_sty_ext               = page2 & pb_q == 8'hbf;
 
 // Subtract without  Carry 
 wire inst_suba_imm              = ir_q == 8'h80 & fetch_ir;
@@ -474,8 +471,17 @@ wire inst_tst_ext               = ir_q == 8'h7d;
 // ------------------------------------------------------------
 
 wire inst_amode_inh = ir_q[7:4] == 4'h1 | ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
-wire inst_amode_imm = ir_q[7:4] == 4'h2 | ir_q[7:4] == 4'h8 | ir_q[7:3] == 5'b1100_0 ; // 2 Byte  
-wire inst_amode_im2 = ir_q[7:3] == 5'b1100_1;                 // 3 Byte Immediate  
+wire inst_amode_imm = 
+  ir_q[7:4] == 4'h2 |       // Short Branches.
+  ir_q[7:3] == 5'b1000_0  | // 8[0-7] 
+  ir_q[7:2] == 6'b1000_10 | // 8[8-b]
+  ir_q[7:0] == 8'h8d      | //    
+  ir_q[7:3] == 5'b1100_0;
+    
+wire inst_amode_im2 = 
+  ir_q[7:3] == 5'b1100_1  |  // C[8-F]
+  ir_q[7:1] == 7'b1000_111 ; // 8[EF]  
+
 wire inst_amode_dir = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
 wire inst_amode_idx = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
 wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
@@ -483,12 +489,22 @@ wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes
 // ------------------------------------------------------------
 // ------------------------------------------------------------
 // Fetch/Branch Classifier
-// Control the first step of the fetch/branch state machine 
+// Control the first step of the fetch/branch state machine
+// The sorted list of opcodes is very helpful. 
 // ------------------------------------------------------------
 // ------------------------------------------------------------
 wire fc_inh = din[7:4] == 4'h1 | din[7:4] == 4'h4 | din[7:4] == 4'h5;  
-wire fc_imm = din[7:4] == 4'h2 | din[7:4] == 4'h8 | din[7:3] == 5'b1100_0;  
-wire fc_im2 = din[7:3] == 5'b1100_1;           // 3 Byte Immediate  
+wire fc_imm = 
+  din[7:4] == 4'h2 |       // Short Branches.
+  din[7:3] == 5'b1000_0  | // 8[0-7] 
+  din[7:2] == 6'b1000_10 | // 8[8-b]
+  din[7:0] == 8'h8d      | //    
+  din[7:3] == 5'b1100_0;
+  
+// 3 Byte Immediate   
+wire fc_im2 = 
+  din[7:3] == 5'b1100_1  |  // C[8-F]
+  din[7:1] == 7'b1000_111 ; // 8[EF]  
 
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
@@ -502,8 +518,12 @@ wire fc_im2 = din[7:3] == 5'b1100_1;           // 3 Byte Immediate
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
 
+// ---------------------------------------------------------
+// 8-Bit ALU 
+// ---------------------------------------------------------
+
 // Input From A, Output to A 
-wire alu_in0_a = 
+wire alu8_in0_a = 
   inst_adca_imm | inst_adca_dir | inst_adca_idx | inst_adca_ext | inst_adda_imm |
   inst_adda_dir | inst_adda_idx | inst_adda_ext | inst_anda_imm | inst_anda_dir |
   inst_anda_idx | inst_anda_ext | inst_asla     | inst_asra     | inst_bita_imm | inst_bita_dir |
@@ -517,7 +537,7 @@ wire alu_in0_a =
   ; 
 
 // Input From B, Output to B 
-wire alu_in0_b = 
+wire alu8_in0_b = 
   inst_adcb_imm | inst_adcb_dir | inst_adcb_idx | inst_adcb_ext | inst_addb_imm |
   inst_addb_dir | inst_addb_idx | inst_addb_ext | inst_andb_imm | inst_andb_dir |
   inst_andb_idx | inst_andb_ext | inst_aslb     | inst_asrb     | inst_bitb_imm | inst_bitb_dir |
@@ -531,12 +551,12 @@ wire alu_in0_b =
   ; 
 
 // Pass-through operations 
-wire alu_in0_imm = 
+wire alu8_in0_imm = 
    inst_lda_imm | inst_ldb_imm
   ;
 
 // Immediate Arguments on B input 
-wire alu_in1_imm = 
+wire alu8_in1_imm = 
   inst_adca_imm | inst_adda_imm | inst_anda_imm | inst_bita_imm |
   inst_cmpa_imm | inst_eora_imm | inst_lda_imm  | inst_ora_imm  |
   inst_sbca_imm | inst_suba_imm |
@@ -546,23 +566,23 @@ wire alu_in1_imm =
   inst_sbcb_imm | inst_subb_imm
   ;
 
-wire alu8_hot = alu_in0_a | alu_in0_b| alu_in0_imm | alu_in1_imm;
+wire alu8_hot = alu8_in0_a | alu8_in0_b| alu8_in0_imm | alu8_in1_imm;
 
 // Output Register destination
-wire alu_dest_a    = alu_in0_a | inst_lda_imm; 
-wire alu_dest_b    = alu_in0_b | inst_ldb_imm; 
+wire alu8_dest_a    = alu8_in0_a | inst_lda_imm; 
+wire alu8_dest_b    = alu8_in0_b | inst_ldb_imm; 
 
 
 // Mux the inputs into ALU Port 0  
-wire [7:0] alu_in0 = {
-  alu_in0_a   ? a_q  :
-  alu_in0_b   ? b_q  :
-  alu_in0_imm ? pb_q :
+wire [7:0] alu8_in0 = {
+  alu8_in0_a   ? a_q  :
+  alu8_in0_b   ? b_q  :
+  alu8_in0_imm ? pb_q :
   8'h0 
   };
 
-wire [7:0] alu_in1 = {
-  alu_in1_imm ? pb_q :
+wire [7:0] alu8_in1 = {
+  alu8_in1_imm ? pb_q :
   8'h0 
   };
 
@@ -570,8 +590,8 @@ wire [4:0] alu8_cc;
 wire [7:0] alu8_out;
 
 alu8 u_alu8 (
-  .alu_in_a(alu_in0),  // LHS 
-  .alu_in_b(alu_in1),  // RHS
+  .alu_in_a(alu8_in0),  // LHS 
+  .alu_in_b(alu8_in1),  // RHS
   .op(ir_q[3:0]),     // Operation in 6809 Encoding
   .op7(ir_q[7]),    // Disambiguation bit. 
   .c_in(cc_q[CC_C]),      // Carry In 
@@ -588,39 +608,75 @@ alu8 u_alu8 (
   .h_out(alu8_cc[4])  
   );
 
-// wire [15:0] alu16_in0 = {
-//  alu_src_pb16 ? { pb_q, fetch2_q }  :
-//  16'h0 
-//  };
+// ---------------------------------------------------------
+// 16-Bit ALU.   No Half-Carry support  
+// ---------------------------------------------------------
 
-// wire [15:0] alu16_in1 = 16'b0;
+wire  [4:0] alu16_cc;
+wire [15:0] alu16_out;
+
+// Pass-through operations 
+wire alu16_in0_imm = 
+   inst_ldd_imm | inst_lds_imm | inst_ldu_imm | inst_ldx_imm
+  ;
+
+wire alu16_hot = alu16_in0_imm;
+
+// Output Register destination
+wire alu16_dest_d    = inst_ldd_imm; 
+wire alu16_dest_s    = inst_lds_imm; 
+wire alu16_dest_u    = inst_ldu_imm; 
+wire alu16_dest_x    = inst_ldx_imm; 
+
+wire [15:0] alu16_in0 = {
+    alu16_in0_imm ? { pb_q, fetch2_q }  :
+    16'h0 
+    };
+
+  wire [15:0] alu16_in1 = 16'b0;
+
+
+  // We have to mux in the correct instruction.
+  wire [6:0] op16 = ( page2|page3) ? pb_q[3:0] : ir_q[6:0];  
+
+  alu16 u_alu16 (
+    .alu_in_a(alu16_in0),  // LHS 
+    .alu_in_b(alu16_in1),  // RHS
+    .op(op16[3:0]),     // Operation in 6809 Encoding
+    .op6(op16[6]),    // Disambiguation bit.
+    .page2(page2), 
+    .page3(page3), 
+    .c_in(cc_q[CC_C]),      // Carry In 
+    .v_in(cc_q[CC_C]), 
+    .h_in(cc_q[CC_H]),
+    
+    .val_clock(clk),  
+     
+    .alu_out(alu16_out),      
+    .c_out(alu16_cc[0]),   
+    .v_out(alu16_cc[1]), 
+    .z_out(alu16_cc[2]), 
+    .n_out(alu16_cc[3]), 
+    .h_out(alu16_cc[4])  
+    );
+
 
 // ----------------------------------------------
 // ALU Condition Code management.
 // ----------------------------------------------
 wire [7:0] cc_q_next;
 
-
-wire [15:0] alu16_out;
-
-// wire [16:0] alu16_sum   = alu16_in0 + alu16_in1 + cc_q[CC_C];
-// wire        alu16_n   = alu16_out[15];
-// wire        alu16_z   = ~( |alu16_out[15:0]);
-// wire        alu16_v   = alu16_out[16] ^ cc_q[CC_C];
-// wire        alu16_c   = alu16_sum[16];
-
-
-// wire [15:0] alu16_out_ldd    = { alu16_in0[15:0] };
-// wire  [4:0] alu16_out_ldd_cc = { cc_q[CC_H], alu16_n, alu16_z,  1'b0, cc_q[CC_H] };
-
-
-assign alu16_out = {
-//   alu_op_ldd   ? alu16_out_ldd :
-  16'h00 
+assign cc_q_next[3:0]  = {
+  alu8_hot  ?  alu8_cc[3:0] :
+  alu16_hot ? alu16_cc[3:0] :
+  cc_q[ 3:0]
   };
-
-assign cc_q_next[3:0]  = alu8_hot ? alu8_cc[3:0] : cc_q[ 3:0];
-assign cc_q_next[CC_H] = alu8_hot ? alu8_cc[4]   : cc_q[CC_H];
+   
+assign cc_q_next[CC_H] = {
+  alu8_hot  ?  alu8_cc[4] :
+  alu16_hot ? alu16_cc[4] :
+  cc_q[CC_H]
+  };
 
 // Condition code register bits pass through
 assign cc_q_next[CC_E] = cc_q[CC_E];   
@@ -638,48 +694,78 @@ always @(posedge clk or negedge reset_b ) begin
   end
 
 // -------------------------------------------------------------
+// -------------------------------------------------------------
 // Register file operations 
+// -------------------------------------------------------------
 // -------------------------------------------------------------
 
 // Support for the transfer opcode.
 
 // ----------- Register A ------------
 wire [7:0] a_q_nxt = {
-  alu_dest_a   ? alu8_out :
+  alu8_dest_a   ? alu8_out :
   inst_ldd_imm ? alu16_out[15:8] :
   a_q 
   };
     
 // ----------- Register B ------------
 wire [7:0] b_q_nxt = {
-  alu_dest_b   ? alu8_out :
+  alu8_dest_b   ? alu8_out :
   inst_ldb_imm ? alu8_out :
   inst_ldd_imm ? alu16_out[7:0] :
   b_q 
   };
 
-
-
 // ----------- Register X ------------
+wire [15:0] x_q_nxt = {
+  inst_ldx_imm ? alu16_out[15:0] :
+  x_q 
+  };
+
 // ----------- Register Y ------------
+wire [15:0] y_q_nxt = {
+  inst_ldy_imm ? alu16_out[15:0] :
+  y_q 
+  };
+
+
 // ----------- Register U ------------
+wire [15:0] u_q_nxt = {
+  inst_ldu_imm ? alu16_out[15:0] :
+  u_q 
+  };
+
+// -- Register S (Stack Pointer ) ----
+wire [15:0] s_q_nxt = {
+  inst_lds_imm ? alu16_out[15:0] :
+  s_q 
+  };
+
+
 // ----------- Register S ------------
 // PC is managed by the fetcher.
-// ----------- Register DP -----------
 
+// ----------- Register DP -----------
+// DP Appears to only be available via tfr/exc 
 
 // Update the registers.   Tie this into the reset signal.  
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
-    a_q <= 8'h00;
-    b_q <= 8'h00;
+    a_q  <= 8'h00;    b_q  <= 8'h00;
+    dp_q <= 8'h00;
+    x_q <= 16'h00;    y_q <= 16'h00;
+    u_q <= 16'h00;    s_q <= 16'h00;
     end 
   else begin 
     a_q <= a_q_nxt;
     b_q <= b_q_nxt;
+    
+    x_q <= x_q_nxt;
+    y_q <= y_q_nxt;
+    u_q <= u_q_nxt;
+    s_q <= s_q_nxt;
     end 
   end
-
 
 // ------------------------------------------------------------
 // Memory Access mux.   Per the data sheet 
@@ -802,10 +888,12 @@ wire [4:0] fetch_state_next = {
   (fetch_wait      &  lsu_ld_msb)    ? st_fetch_wait :
   (fetch_wait      &  lsu_ld_lsb)    ? st_fetch_ir   :
 
-  (fetch_ir       &   fc_inh )    ? st_fetch_ir     :
-  (fetch_ir       & fc_imm )    ? st_fetch_pb_imm : 
-  (fetch_ir       & fc_im2 )    ? st_fetch_pb_imm :
-    
+  (fetch_ir       & fc_inh )       ? st_fetch_ir     :
+  (fetch_ir       & fc_imm )       ? st_fetch_pb_imm : 
+  (fetch_ir       & fc_im2 )       ? st_fetch_pb_imm :
+  (fetch_ir       & page2 )        ? st_fetch_pb_imm :
+  (fetch_ir       & page3 )        ? st_fetch_pb_imm :
+  
   // After the IR has been loaded, we control the state machine 
   // by looking at the already fetched data.
   (fetch_pb_imm   & inst_amode_imm ) ? st_fetch_ir :
@@ -826,8 +914,8 @@ wire din_en =
 wire [7:0] ir_q_next = fetch_ir     ? din : ir_q;
 wire [7:0] pb_q_next = fetch_pb_imm ? din : pb_q;
    
-wire [7:0] fetch2_q_next = { // CHECK 
-  (fetch_pb_imm & inst_amode_im2 ) ? din :
+wire [7:0] fetch2_q_next = { 
+  fetch_b2 ? din :
   fetch2_q 
   };
 
@@ -899,11 +987,9 @@ always @(posedge clk or negedge reset_b ) begin
     end 
   end
 
-
-
 // ------------------------------------------------------------------------
 // Validation Assertions.
-// icarus verilog apparently support "simple immediate assertions"
+// icarus verilog support "simple immediate assertions"
 // ------------------------------------------------------------------------
 
 // Do some sanity checks on every clock 
@@ -922,10 +1008,14 @@ always @(posedge clk) begin
     ) <= 1 );
 
   // Only one source for each side.
-  assert( ( alu_in0_a + alu_in0_b + alu_in0_imm  ) <= 1 );
+  assert( ( alu8_in0_a + alu8_in0_b + alu8_in0_imm  ) <= 1 );
   
   // Only one destination register at a time 
-  assert( ( alu_dest_a + alu_dest_b ) <= 1 );
+  assert( ( alu8_dest_a + alu8_dest_b ) <= 1 );
+  assert( ( alu16_dest_d + alu16_dest_s + alu16_dest_u + alu16_dest_x ) <= 1 );
+
+  // Only one alu at at time 
+  assert( ( alu8_hot + alu16_hot ) <= 1 );
 
   // We should never see more than one instruction active at a time.
   assert( ( 
@@ -953,10 +1043,10 @@ always @(posedge clk) begin
     inst_clr_ext +
     inst_cmpa_imm + inst_cmpa_dir + inst_cmpa_idx + inst_cmpa_ext +
     inst_cmpb_imm + inst_cmpb_dir + inst_cmpb_idx + inst_cmpb_ext +
-    inst_cmpd + inst_cmpd_imm + inst_cmpd_dir + inst_cmpd_idx + inst_cmpd_ext +
-    inst_cmpy + inst_cmpy_imm + inst_cmpy_dir + inst_cmpy_idx + inst_cmpy_ext +
-    inst_cmps + inst_cmps_imm + inst_cmps_dir + inst_cmps_idx + inst_cmps_ext +
-    inst_cmpu + inst_cmpu_imm + inst_cmpu_dir + inst_cmpu_idx + inst_cmpu_ext +
+    inst_cmpd_imm + inst_cmpd_dir + inst_cmpd_idx + inst_cmpd_ext +
+    inst_cmpy_imm + inst_cmpy_dir + inst_cmpy_idx + inst_cmpy_ext +
+    inst_cmps_imm + inst_cmps_dir + inst_cmps_idx + inst_cmps_ext +
+    inst_cmpu_imm + inst_cmpu_dir + inst_cmpu_idx + inst_cmpu_ext +
     inst_cmpx_imm + inst_cmpx_dir + inst_cmpx_idx + inst_cmpx_ext +
     inst_coma + inst_comb +
     inst_com_dir + inst_com_idx + inst_com_ext +
@@ -973,10 +1063,10 @@ always @(posedge clk) begin
     inst_lda_imm + inst_lda_dir + inst_lda_idx + inst_lda_ext +
     inst_ldb_imm + inst_ldb_dir + inst_ldb_idx + inst_ldb_ext +
     inst_ldd_imm + inst_ldd_dir + inst_ldd_idx + inst_ldd_ext +
-    inst_lds + inst_lds_imm + inst_lds_dir + inst_lds_idx + inst_lds_ext +
+    inst_lds_imm + inst_lds_dir + inst_lds_idx + inst_lds_ext +
     inst_ldu_imm + inst_ldu_dir + inst_ldu_idx + inst_ldu_ext +
     inst_ldx_imm + inst_ldx_dir + inst_ldx_idx + inst_ldx_ext +
-    inst_ldy + inst_ldy_imm + inst_ldy_dir + inst_ldy_idx + inst_ldy_ext +
+    inst_ldy_imm + inst_ldy_dir + inst_ldy_idx + inst_ldy_ext +
     inst_leas + inst_leau + inst_leax + inst_leay +
     inst_lsra + inst_lsrb +
     inst_lsr_dir + inst_lsr_idx + inst_lsr_ext +
@@ -999,10 +1089,10 @@ always @(posedge clk) begin
     inst_sta_dir + inst_sta_idx + inst_sta_ext +
     inst_stb_dir + inst_stb_idx + inst_stb_ext + inst_std_dir +
     inst_std_idx + inst_std_ext +
-    inst_sts + inst_sts_dir + inst_sts_idx + inst_sts_ext +
+    inst_sts_dir + inst_sts_idx + inst_sts_ext +
     inst_stu_dir + inst_stu_idx + inst_stu_ext +
     inst_stx_dir + inst_stx_idx + inst_stx_ext +
-    inst_sty + inst_sty_dir + inst_sty_idx + inst_sty_ext +
+    inst_sty_dir + inst_sty_idx + inst_sty_ext +
     inst_suba_imm + inst_suba_dir + inst_suba_idx + inst_suba_ext +
     inst_subb_imm + inst_subb_dir + inst_subb_idx + inst_subb_ext +
     inst_subd_imm + inst_subd_dir + inst_subd_idx + inst_subd_ext +
