@@ -38,7 +38,7 @@ No formal validation yet.   Yosys can spot logic errors that don't appear in sim
 
 ```iverilog -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
 
-```iverilog -gsupported-assertions -g2012  -o tb_m6809 -s tb_6809   m6809_core.v mem-ram.v mem-rom.v m6809_integration.v tb_m6809.v  && vvp tb_m6809```
+```iverilog -gsupported-assertions -g2012  -o tb_m6809 -s tb_6809   m6809_core.v m6809_core_alu8.v m6809_core_alu16.v mem-ram.v mem-rom.v m6809_integration.v tb_m6809.v  && vvp tb_m6809```
 
 ## Formal Verification with yosys
 

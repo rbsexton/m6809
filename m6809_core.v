@@ -152,8 +152,8 @@ wire inst_asr_ext               = ir_q == 8'h77 & fetch_ir;
 
 // Simple Branches 
 wire inst_bra                   = ir_q == 8'h20; 
-wire inst_brn                   = ir_q == 8'h21;  
-wire inst_lbrn                  = ipage[2] & pb_q == 8'h21;
+wire inst_brn                   = ~ipage[2] & ir_q == 8'h21;  
+wire inst_lbrn                  =  ipage[2] & ir_q == 8'h21;
 
 wire inst_bsr                   = ir_q == 8'h8d;
 wire inst_lbsr                  = ir_q == 8'h17;
@@ -218,10 +218,10 @@ wire inst_cmpu_dir              = ipage[3] & ir_q == 8'h93;
 wire inst_cmpu_idx              = ipage[3] & ir_q == 8'ha3;
 wire inst_cmpu_ext              = ipage[3] & ir_q == 8'hb3;
 
-wire inst_cmpx_imm              = ir_q == 8'h8c;
-wire inst_cmpx_dir              = ir_q == 8'h9c;
-wire inst_cmpx_idx              = ir_q == 8'hac;
-wire inst_cmpx_ext              = ir_q == 8'hbc & fetch_ir;
+wire inst_cmpx_imm              = ~ipage[2] & ~ipage[3] & ir_q == 8'h8c;
+wire inst_cmpx_dir              = ~ipage[2] & ~ipage[3] & ir_q == 8'h9c;
+wire inst_cmpx_idx              = ~ipage[2] & ~ipage[3] & ir_q == 8'hac;
+wire inst_cmpx_ext              = ~ipage[2] & ~ipage[3] & ir_q == 8'hbc & fetch_ir;
 
 // Complement Instructions
 wire inst_coma                  = ir_q == 8'h43;
@@ -296,19 +296,19 @@ wire inst_lds_idx               =  ipage[2] & ir_q == 8'hee;
 wire inst_lds_ext               =  ipage[2] & ir_q == 8'hfe;
 
 wire inst_ldu_imm               = ~ipage[2] & ir_q == 8'hce & fetch_ir;
-wire inst_ldu_dir               =  ir_q == 8'hde;
-wire inst_ldu_idx               =  ir_q == 8'hee;
-wire inst_ldu_ext               =  ir_q == 8'hfe;
+wire inst_ldu_dir               = ~ipage[2] & ir_q == 8'hde;
+wire inst_ldu_idx               = ~ipage[2] & ir_q == 8'hee;
+wire inst_ldu_ext               = ~ipage[2] & ir_q == 8'hfe;
 
 wire inst_ldx_imm               = ~ipage[2] & ir_q == 8'h8e & fetch_ir;
-wire inst_ldx_dir               =  ir_q == 8'h9e;
-wire inst_ldx_idx               =  ir_q == 8'hae;
-wire inst_ldx_ext               =  ir_q == 8'hbe;
+wire inst_ldx_dir               = ~ipage[2] & ir_q == 8'h9e;
+wire inst_ldx_idx               = ~ipage[2] & ir_q == 8'hae;
+wire inst_ldx_ext               = ~ipage[2] & ir_q == 8'hbe;
 
-wire inst_ldy_imm               = ipage[2] & ir_q == 8'h8e & fetch_ir;
-wire inst_ldy_dir               = ipage[2] & ir_q == 8'h9e;
-wire inst_ldy_idx               = ipage[2] & ir_q == 8'hae;
-wire inst_ldy_ext               = ipage[2] & ir_q == 8'hbe;
+wire inst_ldy_imm               =  ipage[2] & ir_q == 8'h8e & fetch_ir;
+wire inst_ldy_dir               =  ipage[2] & ir_q == 8'h9e;
+wire inst_ldy_idx               =  ipage[2] & ir_q == 8'hae;
+wire inst_ldy_ext               =  ipage[2] & ir_q == 8'hbe;
 
 // Load Effective Address 
 wire inst_leas                  = ir_q == 8'h32;
@@ -352,7 +352,7 @@ wire inst_orb_dir               = ir_q == 8'hda;
 wire inst_orb_idx               = ir_q == 8'hea;
 wire inst_orb_ext               = ir_q == 8'hfa & fetch_ir;
 
-wire inst_orcc                  = ir_q == 8'hfa;
+wire inst_orcc                  = ir_q == 8'h1a;
 
 // Pushes   
 wire inst_pshs                  = ir_q == 8'h34;
@@ -411,21 +411,21 @@ wire inst_std_dir               = ir_q == 8'hdd;
 wire inst_std_idx               = ir_q == 8'hed;
 wire inst_std_ext               = ir_q == 8'hfd;
 
-wire inst_sts_dir               = ipage[2] & ir_q == 8'hdf;
-wire inst_sts_idx               = ipage[2] & ir_q == 8'hef;
-wire inst_sts_ext               = ipage[2] & ir_q == 8'hff;
+wire inst_sts_dir               =  ipage[2] & ir_q == 8'hdf;
+wire inst_sts_idx               =  ipage[2] & ir_q == 8'hef;
+wire inst_sts_ext               =  ipage[2] & ir_q == 8'hff;
 
-wire inst_stu_dir               = ir_q == 8'hdf;
-wire inst_stu_idx               = ir_q == 8'hef;
-wire inst_stu_ext               = ir_q == 8'hff;
+wire inst_stu_dir               = ~ipage[2] & ir_q == 8'hdf;
+wire inst_stu_idx               = ~ipage[2] & ir_q == 8'hef;
+wire inst_stu_ext               = ~ipage[2] & ir_q == 8'hff;
 
-wire inst_stx_dir               = ir_q == 8'h9f;
-wire inst_stx_idx               = ir_q == 8'haf;
-wire inst_stx_ext               = ir_q == 8'hbf;
+wire inst_stx_dir               = ~ipage[2] & ir_q == 8'h9f;
+wire inst_stx_idx               = ~ipage[2] & ir_q == 8'haf;
+wire inst_stx_ext               = ~ipage[2] & ir_q == 8'hbf;
 
-wire inst_sty_dir               = ipage[2] & ir_q == 8'h9f;
-wire inst_sty_idx               = ipage[2] & ir_q == 8'haf;
-wire inst_sty_ext               = ipage[2] & ir_q == 8'hbf;
+wire inst_sty_dir               =  ipage[2] & ir_q == 8'h9f;
+wire inst_sty_idx               =  ipage[2] & ir_q == 8'haf;
+wire inst_sty_ext               =  ipage[2] & ir_q == 8'hbf;
 
 // Subtract without  Carry 
 wire inst_suba_imm              = ir_q == 8'h80 & fetch_ir;
@@ -438,14 +438,14 @@ wire inst_subb_dir              = ir_q == 8'hd0;
 wire inst_subb_idx              = ir_q == 8'he0;
 wire inst_subb_ext              = ir_q == 8'hf0;
 
-wire inst_subd_imm              = ir_q == 8'h83;
-wire inst_subd_dir              = ir_q == 8'h93; 
-wire inst_subd_idx              = ir_q == 8'ha3;
-wire inst_subd_ext              = ir_q == 8'hb3;
+wire inst_subd_imm              = ~ipage[2] & ~ipage[3] & ir_q == 8'h83;
+wire inst_subd_dir              = ~ipage[2] & ~ipage[3] & ir_q == 8'h93; 
+wire inst_subd_idx              = ~ipage[2] & ~ipage[3] & ir_q == 8'ha3;
+wire inst_subd_ext              = ~ipage[2] & ~ipage[3] & ir_q == 8'hb3;
 
 // Various forms of SWI 
-wire inst_swi                   = ir_q == 8'h3f;
-wire inst_swi2                  = ipage[3] &ir_q == 8'h3f;
+wire inst_swi                   = ~ipage[2] & ~ipage[3] & ir_q == 8'h3f;
+wire inst_swi2                  = ipage[2] &ir_q == 8'h3f;
 wire inst_swi3                  = ipage[3] &ir_q == 8'h3f;
 
 // Sync 

@@ -36,10 +36,10 @@ wire op_subd = op[3:0] == 4'h3 & ~page2 & ~page3 & ~op6; // [8-f]3
 wire op_cmpd = op[3:0] == 4'h3 &  page2; // Two-Byte 
 wire op_cmpu = op[3:0] == 4'h3 &  page3; // Two-Byte 
 
-wire op_cmps = op[3:0] == 4'hc &  page3; // Two-Byte 
-wire op_cmpx = op[3:0] == 4'hc &  ~op6 ;   // [8-b]C 
-wire op_cmpy = op[3:0] == 4'hc &  page2; // Two-Byte 
-wire op_ldd  = op[3:0] == 4'hc &  op6  ;   // [c-f]c 
+wire op_ldd  = op[3:0] == 4'hc &   op6 & ~page2 & ~page3;   // Page0 CC [c-f]c 
+wire op_cmpx = op[3:0] == 4'hc &  ~op6 & ~page2 & ~page3;   // Page0 8c  [8-b]C 
+wire op_cmpy = op[3:0] == 4'hc &  page2; // Page2 8c Two-Byte 
+wire op_cmps = op[3:0] == 4'hc &  page3; // Page3 8c Two-Byte 
 
 wire op_std  = op[3:0] == 4'hd &  op6;   // [d-f]d 
 wire op_sex  = op[3:0] == 4'hd & ~op6;   // 1d
@@ -49,10 +49,10 @@ wire op_ldx  = op[3:0] == 4'he & ~op6 & ~page2;  // Page0 8E [8-b]e
 wire op_lds  = op[3:0] == 4'he &  op6 &  page2;  // Page2 CE [c-f]c 
 wire op_ldy  = op[3:0] == 4'he & ~op6 &  page2;  // Page2 8E 
 
-wire op_sts  = op[3:0] == 4'hf & page2; // [d-f]f 
-wire op_stx  = op[3:0] == 4'hf & ~op6;    // [9-b]f
-wire op_sty  = op[3:0] == 4'hf & page2; // [9-b]f 
-wire op_stu  = op[3:0] == 4'hf & op6  ; // [d-f]f  
+wire op_stx  = op[3:0] == 4'hf & ~op6 & ~page2; // Page0 9f [9-b]f
+wire op_stu  = op[3:0] == 4'hf &  op6 & ~page2; // Page0 DF [d-f]f  
+wire op_sty  = op[3:0] == 4'hf & ~op6 &  page2; // Page2 9f [9-b]f 
+wire op_sts  = op[3:0] == 4'hf &  op6 &  page2; // Page2 DF [d-f]f 
 
 // There is no test, but thats what a lot of these are 
 wire op_tst = 
