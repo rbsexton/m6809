@@ -491,20 +491,26 @@ wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes
 // Fetch/Branch Classifier
 // Control the first step of the fetch/branch state machine
 // The sorted list of opcodes is very helpful. 
+// Classify them in terms of number and type of steps.
 // ------------------------------------------------------------
 // ------------------------------------------------------------
-wire fc_inh = din[7:4] == 4'h1 | din[7:4] == 4'h4 | din[7:4] == 4'h5;  
-wire fc_imm = 
+wire fc_r1 = din[7:4] == 4'h1 | din[7:4] == 4'h4 | din[7:4] == 4'h5;  
+wire fc_r2 = 
   din[7:4] == 4'h2 |       // Short Branches.
   din[7:3] == 5'b1000_0  | // 8[0-7] 
   din[7:2] == 6'b1000_10 | // 8[8-b]
   din[7:0] == 8'h8d      | //    
   din[7:3] == 5'b1100_0;
   
-// 3 Byte Immediate   
-wire fc_im2 = 
+// 3 Byte Read 
+wire fc_r3 = 
   din[7:3] == 5'b1100_1  |  // C[8-F]
   din[7:1] == 7'b1000_111 ; // 8[EF]  
+
+// You cant tell a 3 and 4-byte read apart until 
+// you have the second byte.   Call this A and B.
+wire fc_ext = din[7:1] = 8'h10;
+
 
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
@@ -883,30 +889,33 @@ always @(posedge clk or negedge reset_b ) begin
   end
 
 // We need to do some instruction decode to decide whats next
-// do this with a priority encoder to resolve abiguities.
+// After the IR has been loaded, we control the state machine 
+// by looking at the already fetched data.
 wire [4:0] fetch_state_next = {
   (fetch_wait      &  lsu_ld_msb)    ? st_fetch_wait :
   (fetch_wait      &  lsu_ld_lsb)    ? st_fetch_ir   :
 
-  (fetch_ir       & fc_inh )       ? st_fetch_ir     :
-  (fetch_ir       & fc_imm )       ? st_fetch_pb_imm : 
-  (fetch_ir       & fc_im2 )       ? st_fetch_pb_imm :
+  (fetch_ir       & fc_r1 )          ? st_fetch_ir     :
+
+  (fetch_ir       & fc_r2 )          ? st_fetch_pb_imm : 
+  (fetch_pb_imm   & inst_amode_imm ) ? st_fetch_ir :
+  
+  (fetch_ir       & fc_r3 )        ? st_fetch_pb_imm :
+  (fetch_pb_imm   & inst_amode_im2 ) ? st_fetch_b2 :
+  (fetch_b2                        ) ? st_fetch_ir :
+
+  
   (fetch_ir       & page2 )        ? st_fetch_pb_imm :
   (fetch_ir       & page3 )        ? st_fetch_pb_imm :
   
-  // After the IR has been loaded, we control the state machine 
-  // by looking at the already fetched data.
-  (fetch_pb_imm   & inst_amode_imm ) ? st_fetch_ir :
-  (fetch_pb_imm   & inst_amode_im2 ) ? st_fetch_b2 :
 
-  (fetch_b2                        ) ? st_fetch_ir :
 fetch_state
 };
 
 // Instruction Register and post-byte.
 wire din_en = 
   (fetch_wait    & lsu_idle       ) |
-  (fetch_ir      & (          fc_inh | fc_imm | fc_im2 )) |
+  (fetch_ir      & (          fc_r1 | fc_r2 | fc_r3 )) |
   (fetch_pb_imm  & ( inst_amode_imm  | inst_amode_im2 )) |
   (fetch_b2       )
   ;
@@ -1004,7 +1013,7 @@ always @(posedge clk) begin
 
   // Only one fetch class at a time 
   assert( (
-    fc_inh + fc_imm + fc_im2 
+    fc_r1 + fc_r2 + fc_r3 fc_ext
     ) <= 1 );
 
   // Only one source for each side.
