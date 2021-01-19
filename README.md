@@ -74,13 +74,11 @@ HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet
 - eora_imm 
 - eorb_imm 
 - inca incb
-- ldd_imm ldu_imm ldx_imm
+- lda_imm ldb_imm lds_imm ldy_imm ldd_imm ldu_imm ldx_imm
 - lsra lsrb
-- ora_imm
-- orb_imm
+- ora_imm orb_imm
 - rola rolb
 - rora rorb
-
 
 ## Unsupported   
 
@@ -116,13 +114,13 @@ HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet
 - inc_dir inc_idx inc_ext
 - jmp_dir jmp_idx jmp_ext
 - jsr_dir jsr_idx jsr_ext
-- lda_imm lda_dir lda_idx lda_ext
-- ldb_imm ldb_dir ldb_idx ldb_ext
+- lda_dir lda_idx lda_ext
+- ldb_dir ldb_idx ldb_ext
 - ldd_dir ldd_idx ldd_ext
-- lds lds_imm lds_dir lds_idx lds_ext
+- lds_dir lds_idx lds_ext
 - ldu_dir ldu_idx ldu_ext
 - ldx_dir ldx_idx ldx_ext
-- ldy ldy_imm ldy_dir ldy_idx ldy_ext
+- ldy_dir ldy_idx ldy_ext
 - leas leau leax leay
 - lsr_dir lsr_idx lsr_ext
 - mul

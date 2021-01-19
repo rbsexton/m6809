@@ -44,10 +44,10 @@ wire op_ldd  = op[3:0] == 4'hc &  op6  ;   // [c-f]c
 wire op_std  = op[3:0] == 4'hd &  op6;   // [d-f]d 
 wire op_sex  = op[3:0] == 4'hd & ~op6;   // 1d
 
-wire op_lds  = op[3:0] == 4'he & page2; // [c-f]c 
-wire op_ldu  = op[3:0] == 4'he &  op6;  // [c-f]e  
-wire op_ldx  = op[3:0] == 4'he & ~op6;  // [8-b]e
-wire op_ldy  = op[3:0] == 4'he & page2;  
+wire op_ldu  = op[3:0] == 4'he &  op6 & ~page2;  // Page0 CE [c-f]e  
+wire op_ldx  = op[3:0] == 4'he & ~op6 & ~page2;  // Page0 8E [8-b]e
+wire op_lds  = op[3:0] == 4'he &  op6 &  page2;  // Page2 CE [c-f]c 
+wire op_ldy  = op[3:0] == 4'he & ~op6 &  page2;  // Page2 8E 
 
 wire op_sts  = op[3:0] == 4'hf & page2; // [d-f]f 
 wire op_stx  = op[3:0] == 4'hf & ~op6;    // [9-b]f

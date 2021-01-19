@@ -48,7 +48,6 @@ wire op_ora = op[3:0] == 4'ha &  op7;
 wire op_dec = op[3:0] == 4'ha & ~op7; 
 wire op_add = op[3:0] == 4'hb; 
 wire op_inc = op[3:0] == 4'hc;
-wire op_sex = op[3:0] == 4'hd; 
 wire op_tst = op[3:0] == 4'hd; 
 wire op_clr = op[3:0] == 4'hf; 
 
@@ -111,7 +110,6 @@ assign { c_out, alu_out } =
   ( {9{op_add}} & alu_out_add ) |
   ( {9{op_inc}} & alu_out_lsr ) |
 
-  ( {9{op_sex}} & alu_out_sex ) |
   ( {9{op_ora}} & alu_out_ora ) |
   ( {9{op_tst}} & alu_out_tst ) |
   ( {9{op_clr}} & alu_out_clr )
@@ -153,7 +151,7 @@ assign h_out = (op_adc | op_add ) ? h : h_in;
       op_ror + op_ld  + op_asr + op_st  +
       op_eor + op_lsl +          op_adc + // ASL Omitted
       op_rol + op_dec + op_add + op_inc +
-      op_sex + op_ora + op_tst + op_clr 
+      op_ora + op_tst + op_clr 
       ) <= 1 );
     end 
     

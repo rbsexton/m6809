@@ -90,8 +90,7 @@ wire fetch_b3              = fetch_state[4];
 
 // ------------------------------------------------------------
 // ------------------------------------------------------------
-wire page2 = ir_q == 8'h10;
-wire page3 = ir_q == 8'h11;
+reg [3:2] ipage; // One-Hot exended instruction. 
 
 wire inst_abx                   = ir_q == 8'h3a;
 
@@ -99,18 +98,18 @@ wire inst_abx                   = ir_q == 8'h3a;
 wire inst_adca_imm              = ir_q == 8'h89 & fetch_ir;
 wire inst_adca_dir              = ir_q == 8'h99;
 wire inst_adca_idx              = ir_q == 8'hA9;
-wire inst_adca_ext              = ir_q == 8'hB9;
+wire inst_adca_ext              = ir_q == 8'hB9 & fetch_ir;
 
 wire inst_adcb_imm              = ir_q == 8'hC9 & fetch_ir;
 wire inst_adcb_dir              = ir_q == 8'hD9;
 wire inst_adcb_idx              = ir_q == 8'hE9;
-wire inst_adcb_ext              = ir_q == 8'hF9;
+wire inst_adcb_ext              = ir_q == 8'hF9 & fetch_ir;
 
 // Add Without Carry ( 8 & 16-bit )
 wire inst_adda_imm              = ir_q == 8'h8b & fetch_ir;
 wire inst_adda_dir              = ir_q == 8'h9b;
 wire inst_adda_idx              = ir_q == 8'hab;
-wire inst_adda_ext              = ir_q == 8'hbb;
+wire inst_adda_ext              = ir_q == 8'hbb & fetch_ir;
 
 wire inst_addb_imm              = ir_q == 8'hcb & fetch_ir;
 wire inst_addb_dir              = ir_q == 8'hdb;
@@ -120,18 +119,18 @@ wire inst_addb_ext              = ir_q == 8'hfb & fetch_pb_imm;
 wire inst_addd_imm              = ir_q == 8'hc3;
 wire inst_addd_dir              = ir_q == 8'hd3;
 wire inst_addd_idx              = ir_q == 8'he3;
-wire inst_addd_ext              = ir_q == 8'hf3;
+wire inst_addd_ext              = ir_q == 8'hf3 & fetch_ir;
 
 // And ( 8-Bit ) 
 wire inst_anda_imm              = ir_q == 8'h84 & fetch_ir;
 wire inst_anda_dir              = ir_q == 8'h94;
 wire inst_anda_idx              = ir_q == 8'ha4;
-wire inst_anda_ext              = ir_q == 8'hb4;
+wire inst_anda_ext              = ir_q == 8'hb4 & fetch_ir;
 
 wire inst_andb_imm              = ir_q == 8'hc4 & fetch_ir;
 wire inst_andb_dir              = ir_q == 8'hd4;
 wire inst_andb_idx              = ir_q == 8'he4;
-wire inst_andb_ext              = ir_q == 8'hf4;
+wire inst_andb_ext              = ir_q == 8'hf4 & fetch_ir;
 
 wire inst_andcc_imm             = ir_q == 8'h1c & fetch_ir;
 
@@ -141,7 +140,7 @@ wire inst_aslb                  = ir_q == 8'h58; // Done
 
 wire inst_asl_dir               = ir_q == 8'h08;
 wire inst_asl_idx               = ir_q == 8'h68;
-wire inst_asl_ext               = ir_q == 8'h78;
+wire inst_asl_ext               = ir_q == 8'h78 & fetch_ir;
 
 // Arithmetic Shift Right (ASR)
 wire inst_asra                  = ir_q == 8'h47; // Done 
@@ -149,12 +148,12 @@ wire inst_asrb                  = ir_q == 8'h57; // Done
 
 wire inst_asr_dir               = ir_q == 8'h07;
 wire inst_asr_idx               = ir_q == 8'h67;
-wire inst_asr_ext               = ir_q == 8'h77;
+wire inst_asr_ext               = ir_q == 8'h77 & fetch_ir;
 
 // Simple Branches 
 wire inst_bra                   = ir_q == 8'h20; 
 wire inst_brn                   = ir_q == 8'h21;  
-wire inst_lbrn                  = page2 & pb_q == 8'h21;
+wire inst_lbrn                  = ipage[2] & pb_q == 8'h21;
 
 wire inst_bsr                   = ir_q == 8'h8d;
 wire inst_lbsr                  = ir_q == 8'h17;
@@ -172,12 +171,12 @@ wire inst_bcc                   = ir_q == 8'h24; // Done
 wire inst_bita_imm              = ir_q == 8'h85 & fetch_ir;
 wire inst_bita_dir              = ir_q == 8'h95;
 wire inst_bita_idx              = ir_q == 8'ha5;
-wire inst_bita_ext              = ir_q == 8'hb5;
+wire inst_bita_ext              = ir_q == 8'hb5 & fetch_ir;
 
 wire inst_bitb_imm              = ir_q == 8'hc5 & fetch_ir;
 wire inst_bitb_dir              = ir_q == 8'hd5;
 wire inst_bitb_idx              = ir_q == 8'he5;
-wire inst_bitb_ext              = ir_q == 8'hf5;
+wire inst_bitb_ext              = ir_q == 8'hf5 & fetch_ir;
 
 // Clear Instructions
 wire inst_clra                  = ir_q == 8'h4f; // Done 
@@ -185,44 +184,44 @@ wire inst_clrb                  = ir_q == 8'h5f; // Done
 
 wire inst_clr_dir               = ir_q == 8'h0f;
 wire inst_clr_idx               = ir_q == 8'h6f;
-wire inst_clr_ext               = ir_q == 8'h7f;
+wire inst_clr_ext               = ir_q == 8'h7f & fetch_ir;
 
 // Compares 
 wire inst_cmpa_imm              = ir_q == 8'h81;
 wire inst_cmpa_dir              = ir_q == 8'h91;
 wire inst_cmpa_idx              = ir_q == 8'ha1;
-wire inst_cmpa_ext              = ir_q == 8'hb1;
+wire inst_cmpa_ext              = ir_q == 8'hb1 & fetch_ir;
 
 wire inst_cmpb_imm              = ir_q == 8'hc1;
 wire inst_cmpb_dir              = ir_q == 8'hd1;
 wire inst_cmpb_idx              = ir_q == 8'he1;
-wire inst_cmpb_ext              = ir_q == 8'hf1;
+wire inst_cmpb_ext              = ir_q == 8'hf1 & fetch_ir;
 
 // Some of the compares take two bytes to decode.
-wire inst_cmpd_imm              = page2 & pb_q == 8'h83;
-wire inst_cmpd_dir              = page2 & pb_q == 8'h93;
-wire inst_cmpd_idx              = page2 & pb_q == 8'ha3;
-wire inst_cmpd_ext              = page2 & pb_q == 8'hb3;
+wire inst_cmpd_imm              = ipage[2] & ir_q == 8'h83;
+wire inst_cmpd_dir              = ipage[2] & ir_q == 8'h93;
+wire inst_cmpd_idx              = ipage[2] & ir_q == 8'ha3;
+wire inst_cmpd_ext              = ipage[2] & ir_q == 8'hb3;
 
-wire inst_cmpy_imm              = page2 & pb_q == 8'h8c;
-wire inst_cmpy_dir              = page2 & pb_q == 8'h9c;
-wire inst_cmpy_idx              = page2 & pb_q == 8'hac;
-wire inst_cmpy_ext              = page2 & pb_q == 8'hbc;
+wire inst_cmpy_imm              = ipage[2] & ir_q == 8'h8c;
+wire inst_cmpy_dir              = ipage[2] & ir_q == 8'h9c;
+wire inst_cmpy_idx              = ipage[2] & ir_q == 8'hac;
+wire inst_cmpy_ext              = ipage[2] & ir_q == 8'hbc;
 
-wire inst_cmps_imm              = page3 & pb_q == 8'h8c;
-wire inst_cmps_dir              = page3 & pb_q == 8'h9c;
-wire inst_cmps_idx              = page3 & pb_q == 8'hac;
-wire inst_cmps_ext              = page3 & pb_q == 8'hbc;
+wire inst_cmps_imm              = ipage[3] & ir_q == 8'h8c;
+wire inst_cmps_dir              = ipage[3] & ir_q == 8'h9c;
+wire inst_cmps_idx              = ipage[3] & ir_q == 8'hac;
+wire inst_cmps_ext              = ipage[3] & ir_q == 8'hbc;
 
-wire inst_cmpu_imm              = page3 & pb_q == 8'h83;
-wire inst_cmpu_dir              = page3 & pb_q == 8'h93;
-wire inst_cmpu_idx              = page3 & pb_q == 8'ha3;
-wire inst_cmpu_ext              = page3 & pb_q == 8'hb3;
+wire inst_cmpu_imm              = ipage[3] & ir_q == 8'h83;
+wire inst_cmpu_dir              = ipage[3] & ir_q == 8'h93;
+wire inst_cmpu_idx              = ipage[3] & ir_q == 8'ha3;
+wire inst_cmpu_ext              = ipage[3] & ir_q == 8'hb3;
 
 wire inst_cmpx_imm              = ir_q == 8'h8c;
 wire inst_cmpx_dir              = ir_q == 8'h9c;
 wire inst_cmpx_idx              = ir_q == 8'hac;
-wire inst_cmpx_ext              = ir_q == 8'hbc;
+wire inst_cmpx_ext              = ir_q == 8'hbc & fetch_ir;
 
 // Complement Instructions
 wire inst_coma                  = ir_q == 8'h43;
@@ -230,7 +229,7 @@ wire inst_comb                  = ir_q == 8'h53;
 
 wire inst_com_dir               = ir_q == 8'h03;
 wire inst_com_idx               = ir_q == 8'h63;
-wire inst_com_ext               = ir_q == 8'h73;
+wire inst_com_ext               = ir_q == 8'h73 & fetch_ir;
 
 // CWAI 
 wire inst_cwai                   = ir_q == 8'h3c;
@@ -244,18 +243,18 @@ wire inst_decb                  = ir_q == 8'h5a;
 
 wire inst_dec_dir               = ir_q == 8'h0a;
 wire inst_dec_idx               = ir_q == 8'h6a;
-wire inst_dec_ext               = ir_q == 8'h7a;
+wire inst_dec_ext               = ir_q == 8'h7a & fetch_ir;
 
 // Exclusive Or 
 wire inst_eora_imm              = ir_q == 8'h88 & fetch_ir;
 wire inst_eora_dir              = ir_q == 8'h98;
 wire inst_eora_idx              = ir_q == 8'ha8;
-wire inst_eora_ext              = ir_q == 8'hb8;
+wire inst_eora_ext              = ir_q == 8'hb8 & fetch_ir;
 
 wire inst_eorb_imm              = ir_q == 8'hc8 & fetch_ir;
 wire inst_eorb_dir              = ir_q == 8'hd8; 
 wire inst_eorb_idx              = ir_q == 8'he8;
-wire inst_eorb_ext              = ir_q == 8'hf8;
+wire inst_eorb_ext              = ir_q == 8'hf8 & fetch_ir;
 
 // Increment  
 wire inst_inca                  = ir_q == 8'h4c; // Done
@@ -263,12 +262,12 @@ wire inst_incb                  = ir_q == 8'h5c; // Done
 
 wire inst_inc_dir               = ir_q == 8'h0c;
 wire inst_inc_idx               = ir_q == 8'h6c;
-wire inst_inc_ext               = ir_q == 8'h7c;
+wire inst_inc_ext               = ir_q == 8'h7c & fetch_ir;
 
 // Jump 
 wire inst_jmp_dir               = ir_q == 8'h0e;
 wire inst_jmp_idx               = ir_q == 8'h6e;
-wire inst_jmp_ext               = ir_q == 8'h7e;
+wire inst_jmp_ext               = ir_q == 8'h7e & fetch_ir;
 
 // Jump to subroutine
 wire inst_jsr_dir               = ir_q == 8'h9d;
@@ -279,7 +278,7 @@ wire inst_jsr_ext               = ir_q == 8'hbd;
 wire inst_lda_imm               = ir_q == 8'h86 & fetch_ir ; // Done
 wire inst_lda_dir               = ir_q == 8'h96;
 wire inst_lda_idx               = ir_q == 8'ha6;
-wire inst_lda_ext               = ir_q == 8'hb6;
+wire inst_lda_ext               = ir_q == 8'hb6 & fetch_ir;
 
 wire inst_ldb_imm               = ir_q == 8'hc6 & fetch_ir ; // Done 
 wire inst_ldb_dir               = ir_q == 8'hd6;
@@ -291,25 +290,25 @@ wire inst_ldd_dir               = ir_q == 8'hdc;
 wire inst_ldd_idx               = ir_q == 8'hec;
 wire inst_ldd_ext               = ir_q == 8'hfc;
 
-wire inst_lds_imm               = page2 & pb_q == 8'hce;
-wire inst_lds_dir               = page2 & pb_q == 8'hde;
-wire inst_lds_idx               = page2 & pb_q == 8'hee;
-wire inst_lds_ext               = page2 & pb_q == 8'hfe;
+wire inst_lds_imm               =  ipage[2] & ir_q == 8'hce & fetch_ir;
+wire inst_lds_dir               =  ipage[2] & ir_q == 8'hde;
+wire inst_lds_idx               =  ipage[2] & ir_q == 8'hee;
+wire inst_lds_ext               =  ipage[2] & ir_q == 8'hfe;
 
-wire inst_ldu_imm               = ir_q == 8'hce & fetch_ir;
-wire inst_ldu_dir               = ir_q == 8'hde;
-wire inst_ldu_idx               = ir_q == 8'hee;
-wire inst_ldu_ext               = ir_q == 8'hfe;
+wire inst_ldu_imm               = ~ipage[2] & ir_q == 8'hce & fetch_ir;
+wire inst_ldu_dir               =  ir_q == 8'hde;
+wire inst_ldu_idx               =  ir_q == 8'hee;
+wire inst_ldu_ext               =  ir_q == 8'hfe;
 
-wire inst_ldx_imm               = ir_q == 8'h8e & fetch_ir;
-wire inst_ldx_dir               = ir_q == 8'h9e;
-wire inst_ldx_idx               = ir_q == 8'hae;
-wire inst_ldx_ext               = ir_q == 8'hbe;
+wire inst_ldx_imm               = ~ipage[2] & ir_q == 8'h8e & fetch_ir;
+wire inst_ldx_dir               =  ir_q == 8'h9e;
+wire inst_ldx_idx               =  ir_q == 8'hae;
+wire inst_ldx_ext               =  ir_q == 8'hbe;
 
-wire inst_ldy_imm               = pb_q == page2 & 8'h8e;
-wire inst_ldy_dir               = pb_q == page2 & 8'h9e;
-wire inst_ldy_idx               = pb_q == page2 & 8'hae;
-wire inst_ldy_ext               = pb_q == page2 & 8'hbe;
+wire inst_ldy_imm               = ipage[2] & ir_q == 8'h8e & fetch_ir;
+wire inst_ldy_dir               = ipage[2] & ir_q == 8'h9e;
+wire inst_ldy_idx               = ipage[2] & ir_q == 8'hae;
+wire inst_ldy_ext               = ipage[2] & ir_q == 8'hbe;
 
 // Load Effective Address 
 wire inst_leas                  = ir_q == 8'h32;
@@ -335,7 +334,7 @@ wire inst_mul                   = ir_q == 8'h3d;
 wire inst_nega                  = ir_q == 8'h40;
 wire inst_negb                  = ir_q == 8'h50;
 
-wire inst_neg_dir               = ir_q == 8'h00;
+wire inst_neg_dir               = ir_q == 8'h00 & fetch_ir;
 wire inst_neg_idx               = ir_q == 8'h60;
 wire inst_neg_ext               = ir_q == 8'h70;
 
@@ -351,7 +350,7 @@ wire inst_ora_ext               = ir_q == 8'hba;
 wire inst_orb_imm               = ir_q == 8'hca & fetch_ir;
 wire inst_orb_dir               = ir_q == 8'hda;
 wire inst_orb_idx               = ir_q == 8'hea;
-wire inst_orb_ext               = ir_q == 8'hfa;
+wire inst_orb_ext               = ir_q == 8'hfa & fetch_ir;
 
 wire inst_orcc                  = ir_q == 8'hfa;
 
@@ -412,9 +411,9 @@ wire inst_std_dir               = ir_q == 8'hdd;
 wire inst_std_idx               = ir_q == 8'hed;
 wire inst_std_ext               = ir_q == 8'hfd;
 
-wire inst_sts_dir               = page2 & pb_q == 8'hdf;
-wire inst_sts_idx               = page2 & pb_q == 8'hef;
-wire inst_sts_ext               = page2 & pb_q == 8'hff;
+wire inst_sts_dir               = ipage[2] & ir_q == 8'hdf;
+wire inst_sts_idx               = ipage[2] & ir_q == 8'hef;
+wire inst_sts_ext               = ipage[2] & ir_q == 8'hff;
 
 wire inst_stu_dir               = ir_q == 8'hdf;
 wire inst_stu_idx               = ir_q == 8'hef;
@@ -424,9 +423,9 @@ wire inst_stx_dir               = ir_q == 8'h9f;
 wire inst_stx_idx               = ir_q == 8'haf;
 wire inst_stx_ext               = ir_q == 8'hbf;
 
-wire inst_sty_dir               = page2 & pb_q == 8'h9f;
-wire inst_sty_idx               = page2 & pb_q == 8'haf;
-wire inst_sty_ext               = page2 & pb_q == 8'hbf;
+wire inst_sty_dir               = ipage[2] & ir_q == 8'h9f;
+wire inst_sty_idx               = ipage[2] & ir_q == 8'haf;
+wire inst_sty_ext               = ipage[2] & ir_q == 8'hbf;
 
 // Subtract without  Carry 
 wire inst_suba_imm              = ir_q == 8'h80 & fetch_ir;
@@ -445,15 +444,15 @@ wire inst_subd_idx              = ir_q == 8'ha3;
 wire inst_subd_ext              = ir_q == 8'hb3;
 
 // Various forms of SWI 
-wire inst_swi                   =  ir_q == 8'h3f;
-wire inst_swi2                  = (ir_q == 8'h10) & (pb_q == 8'h3f);
-wire inst_swi3                  = (ir_q == 8'h11) & (pb_q == 8'h3f);
+wire inst_swi                   = ir_q == 8'h3f;
+wire inst_swi2                  = ipage[3] &ir_q == 8'h3f;
+wire inst_swi3                  = ipage[3] &ir_q == 8'h3f;
 
 // Sync 
-wire inst_sync                  =  ir_q == 8'h13;
+wire inst_sync                  = ir_q == 8'h13;
 
 // Transfer 
-wire inst_tfr_imm               =  ir_q == 8'h1f;
+wire inst_tfr_imm               = ir_q == 8'h1f;
 
 // Test  
 wire inst_tsta                  = ir_q == 8'h4d;
@@ -484,6 +483,7 @@ wire inst_amode_im2 =
 
 wire inst_amode_dir = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
 wire inst_amode_idx = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
+
 wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
 
 // ------------------------------------------------------------
@@ -491,26 +491,39 @@ wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes
 // Fetch/Branch Classifier
 // Control the first step of the fetch/branch state machine
 // The sorted list of opcodes is very helpful. 
-// Classify them in terms of number and type of steps.
+// We only need to look at DIN for the first operation so 
+// that we can spot immediate operators
 // ------------------------------------------------------------
 // ------------------------------------------------------------
-wire fc_r1 = din[7:4] == 4'h1 | din[7:4] == 4'h4 | din[7:4] == 4'h5;  
-wire fc_r2 = 
-  din[7:4] == 4'h2 |       // Short Branches.
-  din[7:3] == 5'b1000_0  | // 8[0-7] 
-  din[7:2] == 6'b1000_10 | // 8[8-b]
-  din[7:0] == 8'h8d      | //    
-  din[7:3] == 5'b1100_0;
+
+wire fc_imm = 
+  din[7:4] == 4'h4        | // 4[0-f]
+  din[7:4] == 4'h5          // 5[0-f]
+  ;
+
+wire fc_ext = din[7:1] == 7'b0001_000; // Extended Instructions
+    
+//wire fc_r2 = 
+//  din[7:4] == 4'h0        | // 0[-f]
+//  din[7:1] == 7'b0001_001 | // 1[23]
+//  din[7:0] == 8'b0001_1100| // 1[C]
+//  din[7:0] == 8'b0001_1101| // 1[D]
+//  din[7:1] == 7'b0001_1110| // 1[EF]
+//  din[7:4] == 4'h2        | // 2[0-F]   Short Branches.
+//  din[7:3] == 5'b1000_0   | // 8[0-7] 
+//  din[7:2] == 6'b1000_10  | // 8[8-b]
+//  din[7:3] == 4'b1001     | // 9[0-f] 
+//  din[7:3] == 4'b1101     | // d[0-f]    
+//  din[7:3] == 5'b1100_0     // c[0-7]
+//  ;
   
 // 3 Byte Read 
-wire fc_r3 = 
-  din[7:3] == 5'b1100_1  |  // C[8-F]
-  din[7:1] == 7'b1000_111 ; // 8[EF]  
-
-// You cant tell a 3 and 4-byte read apart until 
-// you have the second byte.   Call this A and B.
-wire fc_ext = din[7:1] = 8'h10;
-
+//wire fc_r3 = 
+//  din[7:1] == 7'b0001_101 | // 1[ab]
+//  din[7:2] == 6'b0001_01  | // 1[4-7]
+//  din[7:3] == 5'b1100_1   | // c[8-f]
+//  din[7:1] == 7'b1000_111   // 8[ef]
+//  ;  
 
 // ------------------------------------------------------------------------
 // ------------------------------------------------------------------------
@@ -623,7 +636,7 @@ wire [15:0] alu16_out;
 
 // Pass-through operations 
 wire alu16_in0_imm = 
-   inst_ldd_imm | inst_lds_imm | inst_ldu_imm | inst_ldx_imm
+   inst_ldd_imm | inst_lds_imm | inst_ldu_imm | inst_ldx_imm | inst_ldy_imm
   ;
 
 wire alu16_hot = alu16_in0_imm;
@@ -633,6 +646,7 @@ wire alu16_dest_d    = inst_ldd_imm;
 wire alu16_dest_s    = inst_lds_imm; 
 wire alu16_dest_u    = inst_ldu_imm; 
 wire alu16_dest_x    = inst_ldx_imm; 
+wire alu16_dest_y    = inst_ldy_imm; 
 
 wire [15:0] alu16_in0 = {
     alu16_in0_imm ? { pb_q, fetch2_q }  :
@@ -641,17 +655,15 @@ wire [15:0] alu16_in0 = {
 
   wire [15:0] alu16_in1 = 16'b0;
 
-
-  // We have to mux in the correct instruction.
-  wire [6:0] op16 = ( page2|page3) ? pb_q[3:0] : ir_q[6:0];  
+  wire [6:0] op16 = ir_q[6:0];  
 
   alu16 u_alu16 (
     .alu_in_a(alu16_in0),  // LHS 
     .alu_in_b(alu16_in1),  // RHS
     .op(op16[3:0]),     // Operation in 6809 Encoding
     .op6(op16[6]),    // Disambiguation bit.
-    .page2(page2), 
-    .page3(page3), 
+    .page2(ipage[2]), 
+    .page3(ipage[3]), 
     .c_in(cc_q[CC_C]),      // Carry In 
     .v_in(cc_q[CC_C]), 
     .h_in(cc_q[CC_H]),
@@ -891,33 +903,37 @@ always @(posedge clk or negedge reset_b ) begin
 // We need to do some instruction decode to decide whats next
 // After the IR has been loaded, we control the state machine 
 // by looking at the already fetched data.
+wire fc_multibyte = ~fc_imm & ~fc_ext;
+
 wire [4:0] fetch_state_next = {
   (fetch_wait      &  lsu_ld_msb)    ? st_fetch_wait :
   (fetch_wait      &  lsu_ld_lsb)    ? st_fetch_ir   :
 
-  (fetch_ir       & fc_r1 )          ? st_fetch_ir     :
+  // For extended instructions and immediates we 
+  // will stay in fetch_ir 
+  (fetch_ir       & fc_imm       )     ? st_fetch_ir     : 
+  (fetch_ir       & fc_ext       )     ? st_fetch_ir     : 
+  (fetch_ir       & fc_multibyte )     ? st_fetch_pb_imm :
 
-  (fetch_ir       & fc_r2 )          ? st_fetch_pb_imm : 
   (fetch_pb_imm   & inst_amode_imm ) ? st_fetch_ir :
-  
-  (fetch_ir       & fc_r3 )        ? st_fetch_pb_imm :
   (fetch_pb_imm   & inst_amode_im2 ) ? st_fetch_b2 :
+  (fetch_pb_imm   & inst_amode_ext ) ? st_fetch_b2 :
+  
   (fetch_b2                        ) ? st_fetch_ir :
 
-  
-  (fetch_ir       & page2 )        ? st_fetch_pb_imm :
-  (fetch_ir       & page3 )        ? st_fetch_pb_imm :
-  
-
-fetch_state
+  fetch_state
 };
 
-// Instruction Register and post-byte.
-wire din_en = 
-  (fetch_wait    & lsu_idle       ) |
-  (fetch_ir      & (          fc_r1 | fc_r2 | fc_r3 )) |
-  (fetch_pb_imm  & ( inst_amode_imm  | inst_amode_im2 )) |
-  (fetch_b2       )
+// Logic to manage the ipage registers. 
+// Preserve it when not in fetch_ir
+// We need an edge detector to spot the first visit to fetch_ir 
+reg fetch_ir_last;
+always @(posedge clk) fetch_ir_last <= fetch_ir; 
+
+wire [3:2] ipage_next =
+  {2{  fetch_ir & ~fetch_ir_last & fc_ext }} & { din[0], ~din[0] } |
+  {2{  fetch_ir &  fetch_ir_last          }} & ipage[3:2]          |
+  {2{ ~fetch_ir                           }} & ipage[3:2]
   ;
   
 wire [7:0] ir_q_next = fetch_ir     ? din : ir_q;
@@ -931,12 +947,14 @@ wire [7:0] fetch2_q_next = {
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
     ir_q     <=  8'h0;
+    ipage    <=  2'b00;
     pb_q     <=  8'b0;
     fetch2_q <= 8'b0; 
     // fetch3_q <= 8'b0;     
     end 
   else begin 
     ir_q     <= ir_q_next;
+    ipage    <= ipage_next;
     pb_q     <= pb_q_next;
     fetch2_q <= fetch2_q_next;
     end 
@@ -1013,15 +1031,18 @@ always @(posedge clk) begin
 
   // Only one fetch class at a time 
   assert( (
-    fc_r1 + fc_r2 + fc_r3 fc_ext
+      fc_imm + fc_ext
     ) <= 1 );
 
   // Only one source for each side.
   assert( ( alu8_in0_a + alu8_in0_b + alu8_in0_imm  ) <= 1 );
-  
+  assert( (                          alu16_in0_imm  ) <= 1 );
+
+  assert( (                           alu8_in1_imm  ) <= 1 );
+    
   // Only one destination register at a time 
   assert( ( alu8_dest_a + alu8_dest_b ) <= 1 );
-  assert( ( alu16_dest_d + alu16_dest_s + alu16_dest_u + alu16_dest_x ) <= 1 );
+  assert( ( alu16_dest_d + alu16_dest_s + alu16_dest_u + alu16_dest_x + alu16_dest_y) <= 1 );
 
   // Only one alu at at time 
   assert( ( alu8_hot + alu16_hot ) <= 1 );
