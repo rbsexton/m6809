@@ -1146,18 +1146,24 @@ always @(posedge clk) begin
   end
 
 // -----------------------------------------
-// Formal Verification   
+// Formal Verification.
+// Initial clock assumptions from 
+// https://zipcpu.com/blog/2017/10/19/formal-intro.html     
 // -----------------------------------------
 `ifdef FORMAL
 
-initial begin
-  assume(reset_b == 0);
-  assume(clk  == 0);
-  end 
+  reg	last_clk_q, past_valid_q;
+  
+  initial past_valid_q = 1'b0; 
 
-always @(posedge clk) begin 
-   assume(reset_b == 1);
-   end 
+  always @(posedge clk)
+    past_valid_q <= 1'b1;
+  
+  always @(*)
+  	if (!past_valid_q)
+  		assume(reset_b == 0);
+  
+
 `endif
 
 
