@@ -84,11 +84,9 @@ wire [8:0] alu_out_asr = { alu_in_a[0], alu_in_a[7],alu_in_a[7:1] };
 
 wire [8:0] alu_out_eor = { c_in,        alu_in_a ^ alu_in_b };
 wire [8:0] alu_out_asl = {                   alu_in_a, 1'b0 };
-wire [8:0] alu_out_adc = {       alu_in_a + alu_in_b + c_in };
 
 wire [8:0] alu_out_rol = {                   alu_in_a, c_in };
-wire [8:0] alu_out_dec = {                 alu_in_a + 8'hff };
-wire [8:0] alu_out_add = {              alu_in_a + alu_in_b };
+wire [8:0] alu_out_dec =          { 1'b0, alu_in_a} + 9'h1ff;
 wire [8:0] alu_out_inc =                         alu_in_a + 1;
 
 wire [8:0] alu_out_ora = { c_in,        alu_in_a | alu_in_b };
@@ -123,7 +121,8 @@ assign { c_out, alu_out } =
 
   ( {9{op_ora}} & alu_out_ora ) |
   ( {9{op_tst}} & alu_out_tst ) |
-  ( {9{op_clr}} & alu_out_clr )
+  ( {9{op_clr}} & alu_out_clr ) |
+  ( {9{op_inc}} & alu_out_inc ) 
   ;
  
 // assign c_out  = alu_out[8];
@@ -139,7 +138,7 @@ assign v_out = {
   c_out ^ c_in
   };
 
-wire [4:0] hsum  = alu_in_a + alu_in_a + c_in;
+wire [4:0] hsum  = {1'b0,alu_in_a_pl_cin[3:0]} + {1'b0, alu_in_b[3:0]};
 wire       h     = hsum[4];
 
 // H is only defined for these two, otherwise preserved.

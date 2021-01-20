@@ -43,14 +43,14 @@ reg  [15:0] s_q;
 reg  [15:0] pc_q;   // Per data sheet, address of the NEXT instruction 
 
 // Bit offsets for the condition code register 
-localparam CC_E = 4'd7; // Entire
-localparam CC_F = 4'd6; // FIRQ Mask
-localparam CC_H = 4'd5; // Half Carry 
-localparam CC_I = 4'd4; // IRQ Mask  
-localparam CC_N = 4'd3; // Negative 
-localparam CC_Z = 4'd2; // Zero  
-localparam CC_V = 4'd1; // Overflow 
-localparam CC_C = 4'd0; // Carry 
+localparam CC_E = 3'd7; // Entire
+localparam CC_F = 3'd6; // FIRQ Mask
+localparam CC_H = 3'd5; // Half Carry 
+localparam CC_I = 3'd4; // IRQ Mask  
+localparam CC_N = 3'd3; // Negative 
+localparam CC_Z = 3'd2; // Zero  
+localparam CC_V = 3'd1; // Overflow 
+localparam CC_C = 3'd0; // Carry 
 
 reg [7:0] ir_q;     // Fetch 0 Instruction Register.
 reg [7:0] pb_q;     // Fetch 1 Post-Byte for 16-bit instructions.
@@ -837,14 +837,10 @@ assign addr = (
 // The Instruction Fetch/Execute system is in charge.
 // The LSU Unit owns the address bus.
 // ------------------------------------------------------------
-
-reg       lsu_load_msb;
-reg       lsu_load_lsb; 
 reg [3:0] lsu_load_dest; // Encoded in Transfer/Exchange Form
 
 localparam REG_DEST_PC = 4'b0101;
-
-wire lsu_load_pc = lsu_load_dest == REG_DEST_PC; 
+// wire lsu_load_pc = lsu_load_dest == REG_DEST_PC; 
 
 // ------------------------------------------------------------
 // The Load/Store Unit
@@ -939,8 +935,6 @@ always @(posedge clk or negedge reset_b ) begin
 // One complicating factor is the fact that the IR can 
 // conflict with the data on the wire.
 // ------------------------------------------------------------
-wire addr_source_i_next = 1'b0;
-
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
     lsu_load_dest <= REG_DEST_PC; // Fetch the PC first.
