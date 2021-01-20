@@ -75,6 +75,7 @@ HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet
 - eorb_imm 
 - inca incb
 - lda_imm ldb_imm lds_imm ldy_imm ldd_imm ldu_imm ldx_imm
+- lda_dir ldb_dir
 - lsra lsrb
 - ora_imm orb_imm
 - rola rolb
@@ -114,8 +115,8 @@ HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet
 - inc_dir inc_idx inc_ext
 - jmp_dir jmp_idx jmp_ext
 - jsr_dir jsr_idx jsr_ext
-- lda_dir lda_idx lda_ext
-- ldb_dir ldb_idx ldb_ext
+- lda_idx lda_ext
+- ldb_idx ldb_ext
 - ldd_dir ldd_idx ldd_ext
 - lds_dir lds_idx lds_ext
 - ldu_dir ldu_idx ldu_ext

@@ -10,6 +10,27 @@
 reset		
 
 ; ------------------------------------------------------
+; Direct Page Loads 
+; ------------------------------------------------------
+
+;  lda #$ff 
+;  tfr a,dp 
+  
+    SETDP #$ff
+  
+  
+    lda < byte2  
+    ldb < byte6  
+
+    ldd < byte6 
+    ldu < byte2
+    ldx < byte0 
+
+    lds < byte4
+    ldy < byte6
+
+
+; ------------------------------------------------------
 ; Immediate Loads 
 ; ------------------------------------------------------
     ; Immediate Loads 
@@ -32,26 +53,6 @@ reset
 spin 
 	nop
 	bra spin
-
-; ------------------------------------------------------
-; Direct Page Loads 
-; ------------------------------------------------------
-
-;  lda #$ff 
-;  tfr a,dp 
-  
-;  SETDP #$ff
-  
-  
-    lda < byte2  
-    ldb < byte6  
-
-    ldd < byte6 
-    ldu < byte2
-    ldx < byte0 
-
-    lds < byte4
-    ldy < byte6
 
 
     ; 16-Bit Immediate 

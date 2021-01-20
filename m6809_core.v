@@ -56,22 +56,28 @@ reg [7:0] fetch3_q; // Fetch 3 .
 
 
 // --------------------------------------------
-// One-hot Instruction Fetch state.
+// One-hot Instruction Fetch state.  Not strictly 
+// the fetch state.  
+// Direct fetches include both 8 and 16-bit data.
 // --------------------------------------------
-reg  [4:0] fetch_state;
+reg  [7:0] fetch_state;
 
-localparam st_fetch_wait   = 5'b0_0001; // Data Wait 
-localparam st_fetch_ir     = 5'b0_0010; // Byte 0: IR Fetch                            
-localparam st_fetch_pb_imm = 5'b0_0100; // Byte 1: Post Byte / Immediate Fetch   
-localparam st_fetch_b2     = 5'b0_1000; // Byte 2   
-localparam st_fetch_b3     = 5'b1_0000; // Byte 3   
+localparam st_fetch_wait   = 8'h01; // Data Wait 
+localparam st_fetch_ir     = 8'h02; // Byte 0: IR Fetch                            
+localparam st_fetch_pb_imm = 8'h04; // Byte 1: Post Byte / Immediate Fetch   
+localparam st_fetch_b2     = 8'h08; // Byte 2   
+localparam st_fetch_b3     = 8'h10; // Byte 3   
+localparam st_fetch_lsu_turn = 8'h20; // The LSU needs at minimum 1 cycle.  
+localparam st_fetch_lsu_wait = 8'h40; // Fetch data via direct access.    
 
 wire fetch_wait            = fetch_state[0];
 wire fetch_ir              = fetch_state[1];
 wire fetch_pb_imm          = fetch_state[2];
 wire fetch_b2              = fetch_state[3];
 wire fetch_b3              = fetch_state[4];
-
+wire fetch_lsu_turn        = fetch_state[5];
+wire fetch_lsu_wait        = fetch_state[6];
+wire fetch_dir1            = fetch_state[7];
 
 // ------------------------------------------------------------
 // ------------------------------------------------------------
@@ -275,13 +281,13 @@ wire inst_jsr_idx               = ir_q == 8'had;
 wire inst_jsr_ext               = ir_q == 8'hbd;
 
 // Many, Many forms of Load
-wire inst_lda_imm               = ir_q == 8'h86 & fetch_ir ; // Done
-wire inst_lda_dir               = ir_q == 8'h96;
+wire inst_lda_imm               = ir_q == 8'h86 & fetch_ir; // Done
+wire inst_lda_dir               = ir_q == 8'h96 & fetch_lsu_wait;
 wire inst_lda_idx               = ir_q == 8'ha6;
 wire inst_lda_ext               = ir_q == 8'hb6 & fetch_ir;
 
 wire inst_ldb_imm               = ir_q == 8'hc6 & fetch_ir ; // Done 
-wire inst_ldb_dir               = ir_q == 8'hd6;
+wire inst_ldb_dir               = ir_q == 8'hd6 & fetch_lsu_wait;
 wire inst_ldb_idx               = ir_q == 8'he6;
 wire inst_ldb_ext               = ir_q == 8'hf6;
 
@@ -465,11 +471,16 @@ wire inst_tst_ext               = ir_q == 8'h7d;
 // ------------------------------------------------------------
 // ------------------------------------------------------------
 // Instruction set metadata.  These apply to already fetched 
-// instruction data. 
+// instruction data. Note that these signals need to persist 
+// througout the instruction cycle.
 // ------------------------------------------------------------
 // ------------------------------------------------------------
 
-wire inst_amode_inh = ir_q[7:4] == 4'h1 | ir_q[7:4] == 4'h4 | ir_q[7:4] == 4'h5;  
+wire inst_amode_inh = 
+  ir_q[7:4] == 4'h1 |
+  ir_q[7:4] == 4'h4 |
+  ir_q[7:4] == 4'h5; 
+   
 wire inst_amode_imm = 
   ir_q[7:4] == 4'h2 |       // Short Branches.
   ir_q[7:3] == 5'b1000_0  | // 8[0-7] 
@@ -481,7 +492,20 @@ wire inst_amode_im2 =
   ir_q[7:3] == 5'b1100_1  |  // C[8-F]
   ir_q[7:1] == 7'b1000_111 ; // 8[EF]  
 
-wire inst_amode_dir = ir_q[7:4] == 4'h9 | ir_q[7:4] == 4'hd; // 2 Byte  
+// There are two direct modes - 8 & 16
+// lda = 96, ldb=d6  
+wire inst_amode_dir1 =
+  ir_q[7:4] == 4'h9  | // 9[0-f] 
+  ir_q[7:4] == 4'hd    // d[0-f]
+  ;
+
+// There are two direct modes - 8 & 16
+// ldd=dc, lds=10de, ldu=de ldx=9e ldy=109e  
+wire inst_amode_dir2 = 0; 
+//  inst_ldd_dir | inst_lds_dir | inst_ldx_dir | inst_ldy_dir | inst_ldu_dir
+//  ; 
+
+  
 wire inst_amode_idx = ir_q[7:4] == 4'ha | ir_q[7:4] == 4'he; // 2+ Bytes  
 
 wire inst_amode_ext = ir_q[7:4] == 4'hb | ir_q[7:4] == 4'hf; // 3 Bytes  
@@ -548,12 +572,16 @@ wire alu8_in0_a =
   inst_anda_idx | inst_anda_ext | inst_asla     | inst_asra     | inst_bita_imm | inst_bita_dir |
   inst_bita_idx | inst_bita_ext | inst_cmpa_imm | inst_cmpa_dir | inst_cmpa_idx |
   inst_cmpa_ext | inst_coma     | inst_daa      | inst_deca     | inst_eora_imm | inst_eora_dir |
-  inst_eora_idx | inst_eora_ext | inst_inca     | inst_lda_dir  |
+  inst_eora_idx | inst_eora_ext | inst_inca     |
   inst_lda_idx  | inst_lda_ext  | inst_lsra     | inst_nega     | inst_ora_imm  | inst_ora_dir |
   inst_ora_idx  | inst_ora_ext  | inst_rola     | inst_rola     | inst_rora     | inst_sbca_imm |
   inst_sbca_dir | inst_sbca_idx | inst_sbca_ext | inst_sta_dir  | inst_sta_idx  | inst_sta_ext |
   inst_suba_imm | inst_suba_dir | inst_suba_idx | inst_suba_ext | inst_tsta      
   ; 
+
+// Input LSU, Output to A 
+wire alu8_in0_lsu = 
+  inst_lda_dir | inst_ldb_dir;
 
 // Input From B, Output to B 
 wire alu8_in0_b = 
@@ -562,7 +590,7 @@ wire alu8_in0_b =
   inst_andb_idx | inst_andb_ext | inst_aslb     | inst_asrb     | inst_bitb_imm | inst_bitb_dir |
   inst_bitb_idx | inst_bitb_ext | inst_cmpb_imm | inst_cmpb_dir | inst_cmpb_idx |
   inst_cmpb_ext | inst_comb     | inst_decb     | inst_eorb_imm | inst_eorb_dir |
-  inst_eorb_idx | inst_eorb_ext | inst_incb     | inst_ldb_dir  |
+  inst_eorb_idx | inst_eorb_ext | inst_incb     |
   inst_ldb_idx  | inst_ldb_ext  | inst_lsrb     | inst_negb     | inst_orb_imm  | inst_orb_dir |
   inst_orb_idx  | inst_orb_ext  | inst_rolb     | inst_rolb     | inst_rorb     | inst_sbcb_imm |
   inst_sbcb_dir | inst_sbcb_idx | inst_sbcb_ext | inst_stb_dir  | inst_stb_idx  | inst_stb_ext |
@@ -585,20 +613,20 @@ wire alu8_in1_imm =
   inst_sbcb_imm | inst_subb_imm
   ;
 
-wire alu8_hot = alu8_in0_a | alu8_in0_b| alu8_in0_imm | alu8_in1_imm;
+wire alu8_hot = alu8_in0_a | alu8_in0_b| alu8_in0_imm | alu8_in1_imm | alu8_in0_lsu;
 
 // Output Register destination
-wire alu8_dest_a    = alu8_in0_a | inst_lda_imm; 
-wire alu8_dest_b    = alu8_in0_b | inst_ldb_imm; 
+wire alu8_dest_a    = alu8_in0_a | inst_lda_imm | inst_lda_dir; 
+wire alu8_dest_b    = alu8_in0_b | inst_ldb_imm | inst_ldb_dir; 
 
 
 // Mux the inputs into ALU Port 0  
-wire [7:0] alu8_in0 = {
-  alu8_in0_a   ? a_q  :
-  alu8_in0_b   ? b_q  :
-  alu8_in0_imm ? pb_q :
-  8'h0 
-  };
+wire [7:0] alu8_in0 = 
+  {8{alu8_in0_a   }} & a_q  |
+  {8{alu8_in0_b   }} & b_q  |
+  {8{alu8_in0_imm }} & pb_q |
+  {8{alu8_in0_lsu }} & lsu_result[7:0] 
+  ;
 
 wire [7:0] alu8_in1 = {
   alu8_in1_imm ? pb_q :
@@ -770,7 +798,7 @@ wire [15:0] s_q_nxt = {
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
     a_q  <= 8'h00;    b_q  <= 8'h00;
-    dp_q <= 8'h00;
+    dp_q <= 8'hff;
     x_q <= 16'h00;    y_q <= 16'h00;
     u_q <= 16'h00;    s_q <= 16'h00;
     end 
@@ -824,49 +852,67 @@ wire lsu_load_pc = lsu_load_dest == REG_DEST_PC;
 // The LSU will need to handle loads initiated by different instructions
 // in a variety of address modes.   There will ultimately be some 
 // sort of ALU like construction in here.
+//
+// The data sheet shows an extra cycle for all of the memory loads 
+// That makes sense, because the data we need isn't registered 
+// until its too late to update the address bus.
 // ------------------------------------------------------------
 wire [15:0] addr_d_next;
 wire [15:0] addr_d_plus1 = addr_d + 1;
+wire [15:0] addr_d_inst; // The address from the instruction side.
 
-reg   [3:0] lsu_state;
-wire  [3:0] lsu_state_next;
+reg   [4:0] lsu_state;
+wire  [4:0] lsu_state_next;
 
 reg   [7:0] lsu_msb;      // We need to stage this
 wire  [7:0] lsu_msb_next; 
 
-wire [15:0] lsu_out; // This gets grabbed by the register.
+wire [15:0] lsu_result; // This gets grabbed by the register.
 
-localparam st_lsu_idle            = 4'd0;
-localparam st_lsu_ld_msb          = 4'd1;
-localparam st_lsu_ld_lsb          = 4'd2;
+localparam st_lsu_por_msb         = 5'h01;
+localparam st_lsu_por_lsb         = 5'h02;
+localparam st_lsu_idle            = 5'h04;
+localparam st_lsu_ld_msb          = 5'h08;
+localparam st_lsu_ld_lsb          = 5'h10;
 
-wire lsu_idle    = lsu_state == st_lsu_idle;
-wire lsu_ld_msb  = lsu_state == st_lsu_ld_msb; // Initial State
-wire lsu_ld_lsb  = lsu_state == st_lsu_ld_lsb;
+wire lsu_por_msb = lsu_state[0];
+wire lsu_por_lsb = lsu_state[1];
+wire lsu_idle    = lsu_state[2];
+wire lsu_ld_msb  = lsu_state[3]; // Initial State
+wire lsu_ld_lsb  = lsu_state[4];
 
 // The address bus belongs to the instruction fetch 
 // system when the LSU isn't using it.
-assign addr_source_i = lsu_idle;
+assign addr_source_i = lsu_idle ;
 
 // The LSU is the only thing that can do writes.
 assign data_rw_n = 1'b1; // Default to read.
 
 assign lsu_state_next =
-  ( {4{ lsu_ld_msb}} & st_lsu_ld_lsb ) |
-  ( {4{ lsu_ld_lsb}} & st_lsu_idle   ) 
+  ( {5{ lsu_por_msb}} & st_lsu_por_lsb                                     ) |
+  ( {5{ lsu_por_lsb}} & st_lsu_idle                                        ) |
+
+  ( {5{ lsu_ld_msb}} & st_lsu_ld_lsb                                       ) |
+  ( {5{ lsu_ld_lsb}} & st_lsu_idle                                         ) |
+
+  ( {5{ lsu_idle & ~fetch_lsu_turn }} & st_lsu_idle                        ) |  
+  ( {5{ lsu_idle &  fetch_lsu_turn & inst_amode_dir1  }} & st_lsu_ld_lsb )
   ;
 
+// Where we're in the idle state, input the next 
 assign addr_d_next = 
+  ( {16{ lsu_por_msb}} & addr_d_plus1 ) |
+  ( {16{ lsu_idle & inst_amode_dir1 }}    & addr_d_inst  ) |
   ( {16{ lsu_ld_msb}} & addr_d_plus1 )
   ;
 
-assign lsu_out = { lsu_msb, din }; // Port memory data straight into register
+assign lsu_result = { lsu_msb, din }; // Port memory data straight into register
 
-assign lsu_msb_next = lsu_ld_msb ? din : lsu_msb;
+assign lsu_msb_next = (lsu_ld_msb|lsu_por_msb) ? din : lsu_msb;
 
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
-    lsu_state <= st_lsu_ld_msb;
+    lsu_state <= st_lsu_por_msb;
     addr_d    <= 16'hfffe;
     end 
   else begin 
@@ -905,9 +951,10 @@ always @(posedge clk or negedge reset_b ) begin
 // by looking at the already fetched data.
 wire fc_multibyte = ~fc_imm & ~fc_ext;
 
-wire [4:0] fetch_state_next = {
+wire [7:0] fetch_state_next = {
   (fetch_wait      &  lsu_ld_msb)    ? st_fetch_wait :
-  (fetch_wait      &  lsu_ld_lsb)    ? st_fetch_ir   :
+  (fetch_wait      &  lsu_ld_lsb)    ? st_fetch_wait :
+  (fetch_wait      &  lsu_por_lsb)   ? st_fetch_ir   :
 
   // For extended instructions and immediates we 
   // will stay in fetch_ir 
@@ -915,9 +962,17 @@ wire [4:0] fetch_state_next = {
   (fetch_ir       & fc_ext       )     ? st_fetch_ir     : 
   (fetch_ir       & fc_multibyte )     ? st_fetch_pb_imm :
 
-  (fetch_pb_imm   & inst_amode_imm ) ? st_fetch_ir :
-  (fetch_pb_imm   & inst_amode_im2 ) ? st_fetch_b2 :
-  (fetch_pb_imm   & inst_amode_ext ) ? st_fetch_b2 :
+  (fetch_pb_imm   & inst_amode_imm ) ? st_fetch_ir    :
+  (fetch_pb_imm   & inst_amode_im2 ) ? st_fetch_b2    :
+  (fetch_pb_imm   & inst_amode_ext ) ? st_fetch_b2    :
+  
+  (fetch_pb_imm   & inst_amode_ext  ) ? st_fetch_b2   :
+  (fetch_pb_imm   & inst_amode_dir1 ) ? st_fetch_lsu_turn :
+
+  (fetch_lsu_turn & inst_amode_dir1 ) ? st_fetch_lsu_wait : // One Cycle  
+  
+  (fetch_lsu_wait                   ) ? st_fetch_ir : 
+  
   
   (fetch_b2                        ) ? st_fetch_ir :
 
@@ -943,6 +998,11 @@ wire [7:0] fetch2_q_next = {
   fetch_b2 ? din :
   fetch2_q 
   };
+
+// Data Fetch 
+assign addr_d_inst = 
+  {16{inst_amode_dir1}} & { dp_q, pb_q } 
+  ;
 
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
@@ -975,8 +1035,6 @@ always @(posedge clk or negedge reset_b ) begin
 // Program Counter/Branch Control 
 // This advances when there are no branches.
 //------------------------------------------
-
-wire        reset_load = lsu_load_pc & lsu_ld_lsb;
 wire [15:0] pc_q_1     = pc_q + 1;
 
 // Short Branches
@@ -999,10 +1057,15 @@ wire do_branch =
   ); 
 
 // Increment is the norm.
+// Let the PC advance on the step prior to wait.
+wire lsu_busy = fetch_lsu_wait;
+wire fetch_active = fetch_ir | fetch_pb_imm | fetch_b2 | fetch_b3; 
 wire [15:0] pc_q_next = {
-  ( reset_load                ) ? lsu_out :
+  fetch_active                  ? pc_q_1       :
+  lsu_por_lsb                   ? lsu_result   :
+  lsu_busy                      ? pc_q         :
   ( fetch_pb_imm &  do_branch ) ? pc_q_sbranch :
-  pc_q_1 
+  pc_q 
   };
 
 always @(posedge clk or negedge reset_b ) begin 
@@ -1026,7 +1089,7 @@ always @(posedge clk) begin
   assert( (
     inst_amode_inh +
     inst_amode_imm + inst_amode_im2 +
-    inst_amode_dir + inst_amode_idx + inst_amode_ext
+    inst_amode_dir1 + inst_amode_dir2 + inst_amode_idx + inst_amode_ext
     ) <= 1 );
 
   // Only one fetch class at a time 
@@ -1035,7 +1098,7 @@ always @(posedge clk) begin
     ) <= 1 );
 
   // Only one source for each side.
-  assert( ( alu8_in0_a + alu8_in0_b + alu8_in0_imm  ) <= 1 );
+  assert( ( alu8_in0_a + alu8_in0_b + alu8_in0_imm + alu8_in0_lsu ) <= 1 );
   assert( (                          alu16_in0_imm  ) <= 1 );
 
   assert( (                           alu8_in1_imm  ) <= 1 );
