@@ -34,6 +34,7 @@ module alu16 (
 // Load and Store are forms of test.
 // And and Bit test are the same operation, with different 
 // destinations for the result.
+// Sign extension is here because it decodes better over here.
 
 wire op_add  = op[3:0] == 4'h3 & ~page2 & ~page3 &  op6; // [c-f]3 
 wire op_subd = op[3:0] == 4'h3 & ~page2 & ~page3 & ~op6; // [8-f]3 
@@ -45,8 +46,8 @@ wire op_cmpx = op[3:0] == 4'hc &  ~op6 & ~page2 & ~page3;   // Page0 8c  [8-b]C
 wire op_cmpy = op[3:0] == 4'hc &  page2; // Page2 8c Two-Byte 
 wire op_cmps = op[3:0] == 4'hc &  page3; // Page3 8c Two-Byte 
 
-wire op_std  = op[3:0] == 4'hd &  op6;   // [d-f]d 
-wire op_sex  = op[3:0] == 4'hd & ~op6;   // 1d
+wire op_std  = op[3:0] == 4'hd &  op6;   // [4-7][c-f]d 
+wire op_sex  = op[3:0] == 4'hd & ~op6;   // [0-3][8-b]
 
 wire op_ldu  = op[3:0] == 4'he &  op6 & ~page2;  // Page0 CE [c-f]e  
 wire op_ldx  = op[3:0] == 4'he & ~op6 & ~page2;  // Page0 8E [8-b]e
@@ -70,8 +71,9 @@ wire op_tst =
 //wire [7:0] alu_in_a_inv = alu_in_a ^ 16'hff;
 //wire [7:0] alu_in_b_inv = alu_in_b ^ 8'hff;
 //wire [8:0] alu_out_add = {              alu_in_a + alu_in_b };
-//wire [8:0] alu_out_sex = {                 {9{alu_in_a[7]}} };
 //wire [8:0] alu_out_clr = { 1'b0,                      8'h00 };
+//wire [16:0] alu_out_sex = { {9{alu_in_a[7]}}, alu_in_a[7:0] };
+
 
 // All operations produce a carry bit.
 wire [16:0] alu_out_tst = { c_in,                   alu_in_a };
@@ -113,7 +115,7 @@ assign h_out = h_in;
     assert( (
       op_add + op_subd + op_cmpd + op_cmpu +
       op_cmps + op_cmpx + op_cmpy + op_ldd +
-      op_std + op_sex +
+      op_std + 
       op_lds + op_ldu + op_ldx + op_ldy +
       op_sts + op_stx + op_sty + op_stu
       ) <= 1 );

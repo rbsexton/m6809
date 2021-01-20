@@ -91,7 +91,6 @@ wire [8:0] alu_out_dec = {                 alu_in_a + 8'hff };
 wire [8:0] alu_out_add = {              alu_in_a + alu_in_b };
 wire [8:0] alu_out_inc =                         alu_in_a + 1;
 
-wire [8:0] alu_out_sex = {                 {9{alu_in_a[7]}} };
 wire [8:0] alu_out_ora = { c_in,        alu_in_a | alu_in_b };
 wire [8:0] alu_out_tst = { c_in,                   alu_in_a };
 wire [8:0] alu_out_clr = { 1'b0,                      8'h00 };
