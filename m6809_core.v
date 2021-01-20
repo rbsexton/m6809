@@ -8,7 +8,7 @@
 // This file is Copyright(C) 2021 by Robert Sexton
 // Non-commercial use only 
 
-module core6809 (
+module m6809_core (
 
   input              reset_b,   // Active Low Reset 
   input              clk,       // Clock 
@@ -639,7 +639,7 @@ wire [7:0] alu8_in1 = {
 wire [4:0] alu8_cc;
 wire [7:0] alu8_out;
 
-alu8 u_alu8 (
+m6809_core_alu8 u_alu8 (
   .alu_in_a(alu8_in0),  // LHS 
   .alu_in_b(alu8_in1),  // RHS
   .op(ir_q[3:0]),     // Operation in 6809 Encoding
@@ -686,13 +686,11 @@ wire [15:0] alu16_in0 = {
 
   wire [15:0] alu16_in1 = 16'b0;
 
-  wire [6:0] op16 = ir_q[6:0];  
-
-  alu16 u_alu16 (
+  m6809_core_alu16 u_alu16 (
     .alu_in_a(alu16_in0),  // LHS 
     .alu_in_b(alu16_in1),  // RHS
-    .op(op16[3:0]),     // Operation in 6809 Encoding
-    .op6(op16[6]),    // Disambiguation bit.
+    .op(ir_q[3:0]),        // Operation in 6809 Encoding
+    .op6(ir_q[6]),         // Disambiguation bit.
     .page2(ipage[2]), 
     .page3(ipage[3]), 
     .c_in(cc_q[CC_C]),      // Carry In 

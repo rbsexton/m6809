@@ -6,13 +6,14 @@
 # sat -seq 10  -prove-asserts -set-assumes -dump_vcd efuse_control.vcd
 [options]
 mode bmc
+depth 50
 
 [engines]
 smtbmc 
 
 [script]
 read -formal m6809_core_alu8.v m6809_core_alu16.v  m6809_core.v 
-prep -top    core6809
+prep -top    m6809_core
 
 [files]
 m6809_core.v

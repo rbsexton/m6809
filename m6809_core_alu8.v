@@ -7,7 +7,7 @@
 // Non-commercial use only 
 
 
-module alu8 (
+module m6809_core_alu8 (
   input        [7:0] alu_in_a,  // LHS 
   input        [7:0] alu_in_b,  // RHS
   input        [3:0] op,        // Operation in 6809 Encoding
