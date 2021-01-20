@@ -59,13 +59,21 @@ wire op_clr = op[3:0] == 4'hf;
 // ALU Condition Codes.
 // ----------------------------------------------
 
-wire [7:0] alu_in_a_inv = alu_in_a ^ 8'hff;
-wire [7:0] alu_in_b_inv = alu_in_b ^ 8'hff;
+wire [7:0] alu_in_a_inv         = alu_in_a ^ 8'hff       ;
+wire [8:0] alu_in_a_pl_cin      = alu_in_a + {7'b0, c_in};
+wire [8:0] alu_in_a_mi_cin      = alu_in_a +    {8{c_in}}; // 'Borrow'
+
+wire [7:0] alu_in_b_inv        = alu_in_b ^ 8'hff        ;
+wire [8:0] alu_in_b_2c         = alu_in_b_inv + 8'h01    ;
+
 
 // All operations produce a carry bit.
-wire [8:0] alu_out_neg =                    alu_in_a_inv + 1;
-wire [8:0] alu_out_sub =         alu_in_a + alu_in_b_inv + 1;
-wire [8:0] alu_out_sbc =  alu_in_a + alu_in_b_inv + 1 - c_in;
+wire [8:0] alu_out_neg =                alu_in_a_inv + 8'h01;
+
+wire [8:0] alu_out_sub =              alu_in_a + alu_in_b_2c;
+wire [8:0] alu_out_sbc =      alu_in_a_mi_cin  + alu_in_b_2c;
+wire [8:0] alu_out_add = {   { 1'b0, alu_in_a} + { 1'b0, alu_in_b} };
+wire [8:0] alu_out_adc =   alu_in_a_pl_cin + { 1'b0, alu_in_b};
 
 wire [8:0] alu_out_com = { 1'b0,               alu_in_a_inv };
 wire [8:0] alu_out_lsr = { alu_in_a[0], 1'b0, alu_in_a[7:1] };
