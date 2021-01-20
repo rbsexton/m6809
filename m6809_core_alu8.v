@@ -2,6 +2,10 @@
 // 
 // CPU Core Layer
 // Maybe a little abstraction will help.
+//
+// This file is Copyright(C) 2021 by Robert Sexton
+// Non-commercial use only 
+
 
 module alu8 (
   input        [7:0] alu_in_a,  // LHS 

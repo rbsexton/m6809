@@ -4,6 +4,10 @@
 // Instructions that use it:
 // add compares loads sign extend stores subtract multiply 
 // No Half Carry 
+//
+// This file is Copyright(C) 2021 by Robert Sexton
+// Non-commercial use only 
+
 
 module alu16 (
   input        [15:0] alu_in_a,  // LHS 

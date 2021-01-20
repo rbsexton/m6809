@@ -1,6 +1,9 @@
 # A 6809 Clone in Verilog 
 
-The 6809 is fairly clean 8-bit MCU with rich addressing modes.  
+The 6809 is fairly clean 8-bit MCU with rich addressing modes.
+
+These files are Copyright(C) 2021 by Robert Sexton, robert@kudra.com.  Non-Commercial 
+and educational use only.
 
 # Project Organization
 

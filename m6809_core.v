@@ -4,6 +4,9 @@
 // This is a big-endian device.
 //
 // The 6809 is a memory traffic rich device.
+//
+// This file is Copyright(C) 2021 by Robert Sexton
+// Non-commercial use only 
 
 module core6809 (
 

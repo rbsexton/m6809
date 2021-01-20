@@ -4,6 +4,9 @@
 // General Notes.
 // This is a big-endian device.
 //
+// This file is Copyright(C) 2021 by Robert Sexton
+// Non-commercial use only 
+
 
 module m6809_integration (
 
