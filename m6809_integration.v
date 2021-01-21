@@ -42,15 +42,16 @@ assign core_data_in = {
   core_data_in_ram
   };
 
-rom_boot u_rom (
+mem_rom u_rom (
   .sel                   (sel_rom),
   .a                     (address[7:0]),
   .dout                  (core_data_in_rom)
   );
 
-ram u_ram (
+mem_ram u_ram (
   .clk                   (clk), 
   .sel                   (sel_ram),
+  .wr_n                  (data_rw_n),
   .a                     (address[7:0]),
   .dout                  (core_data_in_ram),
   .din                   (core_data_out)

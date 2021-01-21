@@ -7,7 +7,7 @@
 // hexdump -v -e '1/0 "  a == 8h%02_ax ? " 1/1 "8h%02x :" 1/0 "\n"' testbed.bin  | sed s/8h/8\'h/g 
 
 
-module rom_boot (
+module mem_rom (
   input  wire       sel,
   input  wire [7:0] a,
   output wire [7:0] dout

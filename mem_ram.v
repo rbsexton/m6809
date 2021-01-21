@@ -1,6 +1,7 @@
+`timescale 1ns / 1ps
 // Emulate an external sync memory.
 
-module ram (
+module mem_ram (
 
   input  wire clk,
   input  wire sel,
