@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 // 8-Bit ALU
 // 
 // CPU Core Layer

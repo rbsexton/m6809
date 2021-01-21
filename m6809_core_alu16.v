@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 // 16-Bit ALU
 // 
 // The 16-bit ALU has far fewer features.

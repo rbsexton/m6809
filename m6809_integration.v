@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 // Integration layer that interfaces with the outside world.
 // This should roughly correspond to the SOC itself 
 //

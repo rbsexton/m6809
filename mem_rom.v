@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 // Emulate an external async memory
 // This module is only large enough to contain the reset vectors and a 
 // very, very small amount of code.
