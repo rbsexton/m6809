@@ -1,2 +1,6 @@
-*.lst
 *.vcd
+validation.lst
+validation.bin
+m6809_core
+trace_tb
+tb_m6809
