@@ -12,7 +12,7 @@
 
 module m6809_core_alu16 (
   input        [15:0] alu_in_a,  // LHS 
-  input        [15:0] alu_in_b,  // RHS
+  // input        [15:0] alu_in_b,  // RHS
   input        [3:0] op,        // Operation in 6809 Encoding
   input              op6,       // Disambiguation bit. 
   input              page2,     // Opcode Page  
@@ -48,7 +48,7 @@ wire op_cmpy = op[3:0] == 4'hc &  page2; // Page2 8c Two-Byte
 wire op_cmps = op[3:0] == 4'hc &  page3; // Page3 8c Two-Byte 
 
 wire op_std  = op[3:0] == 4'hd &  op6;   // [4-7][c-f]d 
-wire op_sex  = op[3:0] == 4'hd & ~op6;   // [0-3][8-b]
+// wire op_sex  = op[3:0] == 4'hd & ~op6;   // [0-3][8-b]
 
 wire op_ldu  = op[3:0] == 4'he &  op6 & ~page2;  // Page0 CE [c-f]e  
 wire op_ldx  = op[3:0] == 4'he & ~op6 & ~page2;  // Page0 8E [8-b]e

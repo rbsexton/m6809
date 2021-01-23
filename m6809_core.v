@@ -14,7 +14,7 @@ module m6809_core (
   input              reset_b,   // Active Low Reset 
   input              clk,       // Clock 
   
-  input              halt_b,    // Terminate after the current instruction.
+  //input              halt_b,    // Terminate after the current instruction.
   
   output wire [15:0] addr,      // External Memory address
   output             data_rw_n, // Memory Write  
@@ -23,6 +23,8 @@ module m6809_core (
   output wire  [7:0] data_out   // External Memory data out     
   
   );
+
+assign data_out = 8'b0; // Tie off
 
 // ------------------------------------------------------------
 // ------------------------------------------------------------
@@ -36,7 +38,7 @@ reg  [ 7:0] b_q;
 reg  [ 7:0] dp_q;
 reg  [ 7:0] cc_q; 
 
-wire [15:0] d_q = { a_q, b_q };
+//wire [15:0] d_q = { a_q, b_q };
 reg  [15:0] x_q;
 reg  [15:0] y_q;
 reg  [15:0] u_q;
@@ -56,7 +58,7 @@ localparam CC_C = 3'd0; // Carry
 reg [7:0] ir_q;     // Fetch 0 Instruction Register.
 reg [7:0] pb_q;     // Fetch 1 Post-Byte for 16-bit instructions.
 reg [7:0] fetch2_q; // Fetch 2 .
-reg [7:0] fetch3_q; // Fetch 3 .
+// reg [7:0] fetch3_q; // Fetch 3 .
 
 
 // --------------------------------------------
@@ -81,7 +83,7 @@ wire fetch_b2              = fetch_state[3];
 wire fetch_b3              = fetch_state[4];
 wire fetch_lsu_turn        = fetch_state[5];
 wire fetch_lsu_wait        = fetch_state[6];
-wire fetch_dir1            = fetch_state[7];
+// wire fetch_dir1            = fetch_state[7];
 
 // ------------------------------------------------------------
 // ------------------------------------------------------------
@@ -685,11 +687,11 @@ wire [15:0] alu16_in0 = {
     16'h0 
     };
 
-  wire [15:0] alu16_in1 = 16'b0;
+  // wire [15:0] alu16_in1 = 16'b0;
 
   m6809_core_alu16 u_alu16 (
     .alu_in_a(alu16_in0),  // LHS 
-    .alu_in_b(alu16_in1),  // RHS
+    //.alu_in_b(alu16_in1),  // RHS
     .op(ir_q[3:0]),        // Operation in 6809 Encoding
     .op6(ir_q[6]),         // Disambiguation bit.
     .page2(ipage[2]), 
@@ -836,7 +838,7 @@ assign addr = (
 // The Instruction Fetch/Execute system is in charge.
 // The LSU Unit owns the address bus.
 // ------------------------------------------------------------
-reg [3:0] lsu_load_dest; // Encoded in Transfer/Exchange Form
+// reg [3:0] lsu_load_dest; // Encoded in Transfer/Exchange Form
 
 localparam REG_DEST_PC = 4'b0101;
 // wire lsu_load_pc = lsu_load_dest == REG_DEST_PC; 
@@ -936,7 +938,7 @@ always @(posedge clk or negedge reset_b ) begin
 // ------------------------------------------------------------
 always @(posedge clk or negedge reset_b ) begin 
   if ( ~reset_b ) begin 
-    lsu_load_dest <= REG_DEST_PC; // Fetch the PC first.
+    // lsu_load_dest <= REG_DEST_PC; // Fetch the PC first.
     end 
   else begin 
     end 

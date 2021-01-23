@@ -12,9 +12,9 @@
 module m6809_integration (
 
   input              reset_b,       // Active Low Reset 
-  input              clk,           // Clock 
+  input              clk           // Clock 
 
-  input              halt_b         // Terminate after the current instruction.
+  // input              halt_b         // Terminate after the current instruction.
     
   );
 
@@ -31,8 +31,9 @@ wire        data_rw_n;
 // --------------------------------------------------------------------
 
 // Divide the memory space in half
-wire sel_rom =  address[15];
-wire sel_ram = ~address[15];
+wire sel_rom =  address[15:8] == 8'hff ;
+wire sel_ram =  address[15:8] == 8'h00;
+
 
 wire [ 7:0] core_data_in_rom;
 wire [ 7:0] core_data_in_ram;
@@ -64,7 +65,7 @@ mem_ram u_ram (
 m6809_core ucore ( 
   .reset_b               (reset_b),
   .clk                   (clk),
-  .halt_b                (halt_b),
+  // .halt_b                (halt_b),
   
   .addr                  (address),
   .din                   (core_data_in),

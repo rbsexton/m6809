@@ -7,13 +7,12 @@ module tb_6809;
 	// Inputs
 	reg reset_b;
 	reg clk;
-	reg halt_b;
+	// reg halt_b;
 
 	// Instantiate the Unit Under Test (UUT)
 	m6809_integration uut  (
 		.reset_b(reset_b), 
-		.clk(clk), 
-		.halt_b(halt_b) 
+		.clk(clk )
 	);
 
   initial
@@ -29,7 +28,6 @@ module tb_6809;
 
 	initial begin
 		// Initialize Inputs
-    halt_b  = 1;
 		reset_b = 0;
 		// Wait for global reset to finish
 		#25;

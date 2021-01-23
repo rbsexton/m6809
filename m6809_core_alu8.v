@@ -139,8 +139,10 @@ assign v_out = {
   c_out ^ c_in
   };
 
+/* verilator lint_off UNUSED */
 wire [4:0] hsum  = {1'b0,alu_in_a_pl_cin[3:0]} + {1'b0, alu_in_b[3:0]};
 wire       h     = hsum[4];
+/* verilator lint_on UNUSED */
 
 // H is only defined for these two, otherwise preserved.
 assign h_out = (op_adc | op_add ) ? h : h_in; 
