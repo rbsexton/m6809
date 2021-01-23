@@ -33,23 +33,35 @@ condition codes register.
 
 # Simulation
 
-## Formal Validation with yosys. 
-
-No formal validation yet.   Yosys can spot logic errors that don't appear in simulation.. 
-
 ## Simulation with Icarus Verilog.  
 
 ```iverilog -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
 
 ```iverilog -gsupported-assertions -g2012  -o tb_m6809 -s tb_6809   m6809_core.v m6809_core_alu8.v m6809_core_alu16.v mem-ram.v mem-rom.v m6809_integration.v tb_m6809.v  && vvp tb_m6809```
 
+## Simulation with Verilator
+
+There is a makefile and main.cpp file in *sim/*.   The Verilator git repository 
+contains some helpful examples.   
+
+There is a good tutorial on EmbEcosm with some examples of how to bring the verilog state information out to simulator so you can display them and run real code on the simulated CPU -  [EmbEcosm](https://www.embecosm.com/appnotes/ean6/embecosm-or1k-verilator-tutorial-ean6-issue-1.html)
+
+Gisselquist also has examples, but they are a bit out of date 
+and closely coupled to the ZipCPU work.  The Verilator examples 
+from the offical github repository were easier to work with. (2021)
+
 ## Formal Verification with yosys
 
-There is a yosys control file for verification, m6809_core.sby 
+Yosys can spot logic errors that don't appear in simulation.   Its good at finding instruction decode issues.   The biggest challenge 
+is writing assertions.
 
-Failure reproduction
+There is a yosys control file for verification, m6809_core.sby:
 
-```iverilog -gsupported-assertions -g2012  -o trace_tb -s testbench trace_tb.v  m6809_core.v m6809_core_alu8.v```
+```
+$ sby -f m6809_core.sby
+# If it fails: 
+# Open m6809_core/engine_0/trace.vcd with gtkwave or similar.
+```
 
 
 # Resources of note
@@ -62,6 +74,9 @@ Original datasheet (via Wikipedia page) here: https://archive.org/details/bitsav
 
 The data sheet contains a useful section called the 'Programmers Aid' that 
 has a very useful table of instructions.
+
+Dave Dunfield scanned the original Motorola Programming Manual (m6809prog.pdf)
+thats the definitive reference on the device.
 
 HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet.fi/mc6809/Information/6809.htm
 

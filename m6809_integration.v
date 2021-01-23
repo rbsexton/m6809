@@ -72,5 +72,22 @@ m6809_core ucore (
   .data_out              (core_data_out),
   .data_rw_n             (data_rw_n)
   );
+
+
+// --------------------------------------------------------------------
+// Simulation with Vare-ilator, the simulator that must not be named
+// because it'll think you're talking to it. 
+// --------------------------------------------------------------------
+
+`ifdef verilator  
+  initial begin
+         $display("[%0t] Tracing to vlt_dump.vcd...\n", $time);
+         $dumpfile("m6809.vcd");
+         $dumpvars();
+      end
+`endif  
+  
+  
+  
   
 endmodule
