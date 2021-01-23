@@ -33,10 +33,10 @@ assign data_out = 8'b0; // Tie off
 // ------------------------------------------------------------
 // ------------------------------------------------------------
 
-reg  [ 7:0] a_q;
-reg  [ 7:0] b_q;
-reg  [ 7:0] dp_q;
-reg  [ 7:0] cc_q; 
+reg  [ 7:0] a_q  /* verilator public */;
+reg  [ 7:0] b_q  /* verilator public */;
+reg  [ 7:0] dp_q /* verilator public */;
+reg  [ 7:0] cc_q /* verilator public */; 
 
 //wire [15:0] d_q = { a_q, b_q };
 reg  [15:0] x_q;
@@ -60,6 +60,15 @@ reg [7:0] pb_q;     // Fetch 1 Post-Byte for 16-bit instructions.
 reg [7:0] fetch2_q; // Fetch 2 .
 // reg [7:0] fetch3_q; // Fetch 3 .
 
+
+// ------------------------------------------------
+// Publish the address bus to verilator.
+`ifdef verilator
+   function [15:0] get_core_addr;
+      // verilator public
+      get_core_addr = addr;
+   endfunction // get_core_addr
+`endif
 
 // --------------------------------------------
 // One-hot Instruction Fetch state.  Not strictly 
