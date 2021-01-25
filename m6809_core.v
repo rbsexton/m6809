@@ -74,6 +74,26 @@ reg [7:0] fetch2_q; // Fetch 2 .
 // One-hot Instruction Fetch state.  Not strictly 
 // the fetch state.  
 // Direct fetches include both 8 and 16-bit data.
+// One Big State Machine.  The Page2/3 opcodes are 
+// handled as additional bits captured on the first fetch
+// These states start when the instruction is on the data bus  
+// inh  : -> !                       (abx)
+// imm8r : -> f_a0 -> !              (adda,addb)
+// imm16r: -> f_a0 -> f_a1 !         (add)
+// ext16r: -> f_a0 -> f_a1 !         (ldd)
+// dir8r : -> f_a0 -> r_m0 !         (adda,addb)
+// dir16r: -> f_a0 -> r_m0 -> r_m1 ! (addd)
+// dir8w : -> f_a0 -> w_m0 !         (sta)
+// ext8w : -> f_a0 -> f_a1 -> w_m1 ! (sta)
+// dir16w: -> f_a0 -> w_m0 -> w_m1 ! (std)
+
+// psh/pop: -> f_a0 -> w_m0 -> w_m1 ...  ! 
+
+// Indexing takes more work.
+// idx8r : -> f_a0 -> w_m0 -> w_m1 ! (std)
+
+
+// fetchop -> page2 -> fetchop ->   
 // --------------------------------------------
 reg  [7:0] fetch_state;
 
