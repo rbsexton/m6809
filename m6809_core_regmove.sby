@@ -1,0 +1,15 @@
+# yosys -s m6809_core_regmove.sby 
+[options]
+mode bmc
+depth 50
+
+[engines]
+smtbmc 
+
+[script]
+read -formal m6809_core_regmove.v
+prep -top    m6809_core_regmove
+
+[files]
+m6809_core_regmove.v
+

@@ -1,9 +1,4 @@
-# yosys -s epigp8toapbv3.sby 
-# read_verilog -formal epigp8toapbv3.v 
-# prep -top epigp8toapb
-# flatten 
-# Bounded Model Checking (BMC) - We don't need many cycles.
-# sat -seq 10  -prove-asserts -set-assumes -dump_vcd efuse_control.vcd
+# yosys -s m6809_core.sby 
 [options]
 mode bmc
 depth 50
