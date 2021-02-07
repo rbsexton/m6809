@@ -35,9 +35,14 @@ condition codes register.
 
 ## Simulation with Icarus Verilog.  
 
-```iverilog -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset```
+```
+iverilog -o tb_m6809reset -s tb_6809reset   core6809.v rom-boot.v m6809_integration.v tb_m6809reset.v  && vvp tb_m6809reset
 
-```iverilog -gsupported-assertions -g2012  -o tb_m6809 -s tb_6809   m6809_core.v m6809_core_alu8.v m6809_core_alu16.v mem-ram.v mem-rom.v m6809_integration.v tb_m6809.v  && vvp tb_m6809```
+iverilog -gsupported-assertions -g2012  -o tb_m6809 -s tb_6809   m6809_core.v m6809_core_alu8.v m6809_core_alu16.v mem-ram.v mem-rom.v m6809_integration.v tb_m6809.v  && vvp tb_m6809```
+
+iverilog -gsupported-assertions -g2012  -o tb_m6809_core_regmove  -s tb_m6809_core_regmove  m6809_core_regmove_integration.v tb_m6809_core_regmove.v m6809_core_regmove.v mem_ram.v && vvp tb_m6809_core_regmove
+```
+
 
 ## Simulation with Verilator
 

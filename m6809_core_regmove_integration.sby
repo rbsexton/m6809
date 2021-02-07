@@ -7,10 +7,11 @@ depth 50
 smtbmc 
 
 [script]
-read -formal m6809_core_regmove.v m6809_core_regmove_integration.v 
+read -formal m6809_core_regmove.v m6809_core_regmove_integration.v mem_ram.v 
 prep -top    m6809_core_regmove_integration
 
 [files]
 m6809_core_regmove.v
 m6809_core_regmove_integration.v
+mem_ram.v
 

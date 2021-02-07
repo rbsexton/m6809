@@ -21,4 +21,14 @@ always @(posedge clk) begin
   
 assign dout = mem[a];   
 
+initial begin 
+  mem[0] = 8'hff;
+  mem[1] = 8'b0;
+  mem[2] = 8'b0;
+  mem[3] = 8'b0;
+  
+
+  end 
+
+
 endmodule
