@@ -31,9 +31,8 @@ wire        data_rw_n;
 // --------------------------------------------------------------------
 
 // Divide the memory space in half
-wire sel_rom =  address[15:8] == 8'hff ;
-wire sel_ram =  address[15:8] == 8'h00;
-
+wire sel_rom =  address[15] == 1'b1 ;
+wire sel_ram =  address[15] == 1'b0;
 
 wire [ 7:0] core_data_in_rom;
 wire [ 7:0] core_data_in_ram;
@@ -44,9 +43,9 @@ assign core_data_in = {
   core_data_in_ram
   };
 
-mem_rom u_rom (
+mem_rom_monitor u_rom (
   .sel                   (sel_rom),
-  .a                     (address[7:0]),
+  .a                     (address[12:0]),
   .dout                  (core_data_in_rom)
   );
 
@@ -54,7 +53,7 @@ mem_ram u_ram (
   .clk                   (clk), 
   .sel                   (sel_ram),
   .wr_n                  (data_rw_n),
-  .a                     (address[7:0]),
+  .a                     (address[11:0]),
   .dout                  (core_data_in_ram),
   .din                   (core_data_out)
   );

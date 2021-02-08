@@ -85,6 +85,16 @@ thats the definitive reference on the device.
 
 HTML Version of the programmers guide - Instruction reference: http://atjs.mbnet.fi/mc6809/Information/6809.htm
 
+# *monitor.asm*
+
+The logical target for the first version is the motorola monitor.  I started 
+with the one from the sbc09 project, and modified it as follows:
+
+- Moved the origin to 0xe000 to make it exactly 8k.
+
+
+*asm6809 monitor.asm -H -l monitor.lst -o monitor.hex*
+
 # Instruction Support 
 
 ## Supported
